@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang='en' data-theme='dark'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>AniTool - AniDeepth for After Effects</title>
+  <meta name='description' content='AniDeepth helps After Effects animators move 3D layers in depth while preserving the visual size they already composed.'>
+  <link rel='preload' href='assets/ani-deepth-hero.png' as='image'>
+  <link rel='stylesheet' href='styles.css'>
+</head>
+<body>
+  <header class='siteHeader' data-header>
+    <a class='brand' href='#top' aria-label='AniTool home'>
+      <span class='brandMark'>AT</span>
+      <span>AniTool</span>
+    </a>
+    <button class='navToggle' type='button' aria-label='Open navigation' aria-expanded='false' data-nav-toggle>
+      <span></span><span></span><span></span>
+    </button>
+    <nav class='nav' data-nav aria-label='Main navigation'>
+      <a href='#workflow' data-i18n='nav.workflow'>Workflow</a>
+      <a href='#features' data-i18n='nav.features'>Features</a>
+      <a href='#pricing' data-i18n='nav.pricing'>Pricing</a>
+      <a href='#faq' data-i18n='nav.faq'>FAQ</a>
+      <a class='navCta' href='mailto:sales@anitool.local?subject=AniDeepth%20License' data-i18n='nav.cta'>Get license</a>
+    </nav>
+    <div class='siteControls' aria-label='Site settings'>
+      <div class='segmentedControl' role='group' aria-label='Language'>
+        <button type='button' data-lang-option='en' aria-pressed='true'>EN</button>
+        <button type='button' data-lang-option='vi' aria-pressed='false'>VI</button>
+      </div>
+      <div class='segmentedControl' role='group' aria-label='Currency'>
+        <button type='button' data-currency-option='USD' aria-pressed='true'>USD</button>
+        <button type='button' data-currency-option='VND' aria-pressed='false'>VND</button>
+      </div>
+      <button class='themeToggle' type='button' data-theme-toggle aria-label='Toggle color mode'><span data-theme-label>Dark</span></button>
+    </div>
+  </header>
+
+  <main id='top'>
+    <section class='hero' aria-labelledby='heroTitle'>
+      <div class='heroBackdrop' aria-hidden='true'></div>
+      <div class='heroInner'>
+        <p class='eyebrow' data-i18n='hero.eyebrow'>After Effects CEP product by AniTool</p>
+        <h1 id='heroTitle'>AniDeepth</h1>
+        <p class='heroCopy' data-i18n='hero.copy'>Move 3D layers through camera depth and world axes while keeping the frame you already designed visually stable.</p>
+        <div class='heroActions' aria-label='Primary actions'>
+          <a class='button primary' href='mailto:sales@anitool.local?subject=AniDeepth%20License' data-i18n='hero.buy'>Buy license</a>
+          <a class='button secondary' href='#workflow' data-i18n='hero.workflow'>See workflow</a>
+        </div>
+        <dl class='heroStats' aria-label='Product highlights'>
+          <div><dt data-i18n='hero.stat1.label'>Modes</dt><dd data-i18n='hero.stat1.value'>Camera + World</dd></div>
+          <div><dt data-i18n='hero.stat2.label'>Table</dt><dd data-i18n='hero.stat2.value'>Layer depth</dd></div>
+          <div><dt data-i18n='hero.stat3.label'>Editing</dt><dd data-i18n='hero.stat3.value'>Interactive</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class='introBand' aria-label='Product summary'>
+      <div class='sectionInner introGrid'>
+        <p data-i18n='intro.copy'>AniDeepth is built for motion designers who need fast depth layout inside After Effects without manually recalculating scale every time a layer moves.</p>
+        <ul class='inlineProofs' aria-label='Core uses'>
+          <li data-i18n='intro.use1'>Cloud layers</li>
+          <li data-i18n='intro.use2'>Parallax scenes</li>
+          <li data-i18n='intro.use3'>3D card stacks</li>
+          <li data-i18n='intro.use4'>Late object snaps</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class='section' id='workflow' aria-labelledby='workflowTitle'>
+      <div class='sectionInner twoColumn'>
+        <div>
+          <p class='eyebrow' data-i18n='workflow.eyebrow'>Workflow</p>
+          <h2 id='workflowTitle' data-i18n='workflow.title'>Set the frame first. Adjust depth after.</h2>
+        </div>
+        <div class='steps' aria-label='AniDeepth workflow steps'>
+          <article><span>01</span><h3 data-i18n='workflow.step1.title'>Select layers</h3><p data-i18n='workflow.step1.copy'>Auto load reads the selected layers into a compact table. Lock the table when the layout needs to stay fixed.</p></article>
+          <article><span>02</span><h3 data-i18n='workflow.step2.title'>Choose movement</h3><p data-i18n='workflow.step2.copy'>Use Camera Depth for camera-facing moves or World X, Y, Z for stable axis-based layout.</p></article>
+          <article><span>03</span><h3 data-i18n='workflow.step3.title'>Drag interactively</h3><p data-i18n='workflow.step3.copy'>Move layers live with sensitivity levels, modifier keys, undo, redo, and reset per layer.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class='section featureBand' id='features' aria-labelledby='featuresTitle'>
+      <div class='sectionInner'>
+        <div class='sectionLead'>
+          <p class='eyebrow' data-i18n='features.eyebrow'>Features</p>
+          <h2 id='featuresTitle' data-i18n='features.title'>Depth tools that respect an animator's existing composition.</h2>
+        </div>
+        <div class='featureGrid'>
+          <article><h3 data-i18n='features.card1.title'>Preserve-view scale</h3><p data-i18n='features.card1.copy'>Depth changes compensate scale so a designed frame stays visually consistent while the layer position changes.</p></article>
+          <article><h3 data-i18n='features.card2.title'>Layer depth table</h3><p data-i18n='features.card2.copy'>See current depth for selected layers, reorder the working list, and keep action controls close to each row.</p></article>
+          <article><h3 data-i18n='features.card3.title'>Distribute modes</h3><p data-i18n='features.card3.copy'>Together, Spread, Random Order, Random Depth, and Random Chaos cover clean spacing through playful variation.</p></article>
+          <article><h3 data-i18n='features.card4.title'>Snap 3D objects</h3><p data-i18n='features.card4.copy'>Snap one 3D layer to another at the current frame, optionally parent it, and choose below, same, or above depth.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class='section modesSection' aria-labelledby='modesTitle'>
+      <div class='sectionInner modesLayout'>
+        <div><p class='eyebrow' data-i18n='modes.eyebrow'>Distribute</p><h2 id='modesTitle' data-i18n='modes.title'>Five depth behaviors, named for memory.</h2></div>
+        <div class='modeList' aria-label='Distribute mode explanations'>
+          <article><h3 data-i18n='modes.together.title'>Together</h3><p data-i18n='modes.together.copy'>All selected layers move by the same amount.</p></article>
+          <article><h3 data-i18n='modes.spread.title'>Spread</h3><p data-i18n='modes.spread.copy'>Layers are evenly distributed by the table order.</p></article>
+          <article><h3 data-i18n='modes.randomOrder.title'>Random Order</h3><p data-i18n='modes.randomOrder.copy'>Even spacing, shuffled near and far positions.</p></article>
+          <article><h3 data-i18n='modes.randomDepth.title'>Random Depth</h3><p data-i18n='modes.randomDepth.copy'>Table order remains, depth rhythm becomes uneven.</p></article>
+          <article><h3 data-i18n='modes.randomChaos.title'>Random Chaos</h3><p data-i18n='modes.randomChaos.copy'>Both order and depth spacing become irregular.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class='section pricingBand' id='pricing' aria-labelledby='pricingTitle'>
+      <div class='sectionInner pricingLayout'>
+        <div class='pricingCopy'>
+          <p class='eyebrow' data-i18n='pricing.eyebrow'>License</p>
+          <h2 id='pricingTitle' data-i18n='pricing.title'>Early access for After Effects artists.</h2>
+          <p data-i18n='pricing.copy'>Use this public page to sell, collect interest, or send buyers to a manual license flow while the payment system is still being built.</p>
+        </div>
+        <div class='priceCards'>
+          <article class='priceCard featured'>
+            <p class='plan' data-i18n='pricing.creator.plan'>Creator</p>
+            <p class='price' data-price data-usd='29' data-vnd='690000'>$29</p>
+            <p class='note' data-i18n='pricing.creator.note'>Early access license</p>
+            <ul><li data-i18n='pricing.creator.item1'>AniDeepth CEP panel</li><li data-i18n='pricing.creator.item2'>License key activation</li><li data-i18n='pricing.creator.item3'>Updates during beta</li></ul>
+            <a class='button primary full' href='mailto:sales@anitool.local?subject=AniDeepth%20Creator%20License' data-i18n='pricing.creator.cta'>Buy Creator</a>
+          </article>
+          <article class='priceCard'>
+            <p class='plan' data-i18n='pricing.studio.plan'>Studio</p>
+            <p class='price' data-i18n='pricing.studio.price'>Custom</p>
+            <p class='note' data-i18n='pricing.studio.note'>For multiple seats</p>
+            <ul><li data-i18n='pricing.studio.item1'>Team license tracking</li><li data-i18n='pricing.studio.item2'>Device reset support</li><li data-i18n='pricing.studio.item3'>Priority fixes</li></ul>
+            <a class='button secondary full' href='mailto:sales@anitool.local?subject=AniDeepth%20Studio%20License' data-i18n='pricing.studio.cta'>Contact</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class='section faqSection' id='faq' aria-labelledby='faqTitle'>
+      <div class='sectionInner faqLayout'>
+        <div><p class='eyebrow' data-i18n='faq.eyebrow'>FAQ</p><h2 id='faqTitle' data-i18n='faq.title'>Before release.</h2></div>
+        <div class='faqList'>
+          <details><summary data-i18n='faq.q1'>Does it replace After Effects 3D?</summary><p data-i18n='faq.a1'>No. It works with After Effects 3D layers and gives you a faster way to place them in depth.</p></details>
+          <details><summary data-i18n='faq.q2'>Does it support Camera Depth and World axes?</summary><p data-i18n='faq.a2'>Yes. Camera Depth is for camera-relative depth. World X, Y, and Z are stable axis modes.</p></details>
+          <details><summary data-i18n='faq.q3'>Is the payment system connected?</summary><p data-i18n='faq.a3'>Not yet. This page is ready for sales copy and manual license requests first.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class='footer'>
+    <div class='sectionInner footerInner'>
+      <a class='brand' href='#top' aria-label='AniTool home'><span class='brandMark'>AT</span><span>AniTool</span></a>
+      <p data-i18n='footer.copy'>AniTool builds practical animation tools for After Effects artists.</p>
+      <a href='mailto:sales@anitool.local?subject=AniDeepth'>sales@anitool.local</a>
+    </div>
+  </footer>
+
+  <script src='script.js'></script>
+</body>
+</html>

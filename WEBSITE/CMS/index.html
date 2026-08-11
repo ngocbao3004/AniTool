@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AniTool CMS</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <main class="shell">
+        <section class="topbar">
+            <div>
+                <h1>AniTool CMS</h1>
+                <p>License manager for Ani Deepth.</p>
+            </div>
+            <div class="session">
+                <span id="userEmail">Not signed in</span>
+                <button id="signOutBtn" type="button" hidden>Sign Out</button>
+            </div>
+        </section>
+
+        <section id="setupNotice" class="notice" hidden>
+            Fill <code>firebase-config.js</code>, enable Firebase Auth Email/Password, then create an <code>admins/{uid}</code> document.
+        </section>
+
+        <section id="loginPanel" class="panel loginPanel">
+            <h2>Admin Login</h2>
+            <form id="loginForm" class="formGrid">
+                <label>
+                    <span>Email</span>
+                    <input id="loginEmail" type="email" autocomplete="username" required>
+                </label>
+                <label>
+                    <span>Password</span>
+                    <input id="loginPassword" type="password" autocomplete="current-password" required>
+                </label>
+                <button class="primaryButton" type="submit">Sign In</button>
+            </form>
+        </section>
+
+        <section id="adminPanel" class="workspace" hidden>
+            <section class="panel licenseEditor">
+                <div class="panelHeader">
+                    <h2>License</h2>
+                    <button id="newLicenseBtn" type="button">New</button>
+                </div>
+                <form id="licenseForm" class="formGrid">
+                    <label>
+                        <span>License Key</span>
+                        <div class="inlineInput">
+                            <input id="licenseKey" type="text" autocomplete="off" required>
+                            <button id="generateKeyBtn" type="button">Generate</button>
+                        </div>
+                    </label>
+                    <label>
+                        <span>Email</span>
+                        <input id="licenseEmail" type="email" autocomplete="off" required>
+                    </label>
+                    <label>
+                        <span>Product</span>
+                        <select id="productId">
+                            <option value="ani-deepth">Ani Deepth</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Status</span>
+                        <select id="licenseStatus">
+                            <option value="active">Active</option>
+                            <option value="blocked">Blocked</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Plan</span>
+                        <input id="licensePlan" type="text" value="pro" autocomplete="off">
+                    </label>
+                    <label>
+                        <span>Expires</span>
+                        <input id="expiresAt" type="date">
+                    </label>
+                    <label>
+                        <span>Max Devices</span>
+                        <input id="maxDevices" type="number" min="1" max="20" value="2">
+                    </label>
+                    <label class="wide">
+                        <span>Note</span>
+                        <textarea id="licenseNote" rows="3"></textarea>
+                    </label>
+                    <div class="buttonRow">
+                        <button class="primaryButton" type="submit">Save License</button>
+                        <button id="resetDevicesBtn" type="button">Reset Devices</button>
+                        <button id="deleteLicenseBtn" class="dangerButton" type="button">Delete</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel licenseList">
+                <div class="panelHeader">
+                    <h2>Licenses</h2>
+                    <input id="searchInput" type="search" placeholder="Search email or key">
+                </div>
+                <div class="tableWrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Devices</th>
+                                <th>Expires</th>
+                            </tr>
+                        </thead>
+                        <tbody id="licenseRows">
+                            <tr><td colspan="5" class="empty">No license data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
+        <p id="statusText" class="statusText">Ready.</p>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>

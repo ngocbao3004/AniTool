@@ -1,0 +1,30 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Dependencies/build caches
+**/node_modules/
+**/.firebase/
+**/.cache/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Local Firebase/project config
+**/.firebaserc
+WEBSITE/CMS/firebase-config.js
+WEBSITE/CMS/firebase-config.local.js
+
+# Local backups/dev clutter
+DEV_TOOLS/backups/
+PRODUCT/AfterEffects/AniDeepth/bakup/
+PRODUCT/AfterEffects/AniDeepth/DEV_TOOLS/
+
+# Keep AniDeepth source local by default for public Pages repos.
+PRODUCT/AfterEffects/AniDeepth/client/
+PRODUCT/AfterEffects/AniDeepth/CSXS/
+PRODUCT/AfterEffects/AniDeepth/host/
+PRODUCT/AfterEffects/AniDeepth/tools/
+PRODUCT/AfterEffects/AniDeepth/.debug
