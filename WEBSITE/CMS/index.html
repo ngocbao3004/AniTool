@@ -94,19 +94,10 @@
                     <section class="panel licenseEditor">
                         <div class="panelHeader">
                             <div>
-                                <span class="panelKicker">Bán hàng</span>
                                 <h2>Tạo license key</h2>
                             </div>
-                            <button id="newLicenseBtn" type="button">Tạo mới</button>
                         </div>
-                        <form id="licenseForm" class="formGrid">
-                            <label class="wide">
-                                <span>License key</span>
-                                <div class="inlineInput">
-                                    <input id="licenseKey" type="text" autocomplete="off" required>
-                                    <button id="generateKeyBtn" type="button">Sinh key</button>
-                                </div>
-                            </label>
+                        <form id="licenseForm" class="formGrid simpleLicenseForm">
                             <label>
                                 <span>Sản phẩm</span>
                                 <select id="productId">
@@ -117,19 +108,6 @@
                                 </select>
                             </label>
                             <label>
-                                <span>Trạng thái</span>
-                                <select id="licenseStatus">
-                                    <option value="available">Chưa kích hoạt</option>
-                                    <option value="active">Đang dùng</option>
-                                    <option value="blocked">Đã khóa</option>
-                                    <option value="expired">Hết hạn</option>
-                                </select>
-                            </label>
-                            <label>
-                                <span>Gói</span>
-                                <input id="licensePlan" type="text" value="creator" autocomplete="off">
-                            </label>
-                            <label>
                                 <span>Số ngày</span>
                                 <input id="durationDays" type="number" min="0" max="3650" value="365">
                             </label>
@@ -138,31 +116,17 @@
                                 <input id="maxDevices" type="number" min="1" max="20" value="1">
                             </label>
                             <label>
-                                <span>Số key</span>
-                                <input id="licenseQuantity" type="number" min="1" max="50" value="1">
-                            </label>
-                            <label>
-                                <span>Email khách</span>
-                                <input id="licenseEmail" type="email" autocomplete="off" placeholder="Không bắt buộc">
-                            </label>
-                            <label>
-                                <span>Owner UID</span>
-                                <input id="ownerUid" type="text" autocomplete="off" placeholder="Chỉ dùng khi gắn tay">
+                                <span>Gmail</span>
+                                <input id="licenseEmail" type="email" autocomplete="off" placeholder="email khách nếu có">
                             </label>
                             <label class="wide">
-                                <span>Ghi chú</span>
-                                <textarea id="licenseNote" rows="3" placeholder="Tên khách, mã giao dịch, ghi chú thanh toán"></textarea>
+                                <span>License key</span>
+                                <div class="licenseKeyRow">
+                                    <input id="licenseKey" type="text" autocomplete="off" spellcheck="false" readonly placeholder="Bấm Tạo để sinh license">
+                                    <button id="generateKeyBtn" class="primaryButton" type="submit">Tạo</button>
+                                    <button id="copyLicensesBtn" type="button">Copy</button>
+                                </div>
                             </label>
-                            <label class="wide">
-                                <span>Key vừa tạo</span>
-                                <textarea id="generatedLicenses" rows="4" readonly placeholder="License mới sẽ hiện ở đây"></textarea>
-                            </label>
-                            <div class="buttonRow wide">
-                                <button class="primaryButton" type="submit">Lưu / tạo license</button>
-                                <button id="copyLicensesBtn" type="button">Copy key mới</button>
-                                <button id="resetDevicesBtn" type="button">Reset máy</button>
-                                <button id="deleteLicenseBtn" class="dangerButton" type="button">Xóa</button>
-                            </div>
                         </form>
                     </section>
                 </div>

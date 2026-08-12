@@ -9,14 +9,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import {
     collection,
-    deleteDoc,
     doc,
     getDoc,
     getFirestore,
     onSnapshot,
     serverTimestamp,
-    setDoc,
-    updateDoc
+    setDoc
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -47,20 +45,10 @@ const els = {
     licenseForm: document.getElementById("licenseForm"),
     licenseKey: document.getElementById("licenseKey"),
     licenseEmail: document.getElementById("licenseEmail"),
-    ownerUid: document.getElementById("ownerUid"),
     productId: document.getElementById("productId"),
-    licenseStatus: document.getElementById("licenseStatus"),
-    licensePlan: document.getElementById("licensePlan"),
     durationDays: document.getElementById("durationDays"),
     maxDevices: document.getElementById("maxDevices"),
-    licenseQuantity: document.getElementById("licenseQuantity"),
-    licenseNote: document.getElementById("licenseNote"),
-    generatedLicenses: document.getElementById("generatedLicenses"),
     copyLicensesBtn: document.getElementById("copyLicensesBtn"),
-    newLicenseBtn: document.getElementById("newLicenseBtn"),
-    generateKeyBtn: document.getElementById("generateKeyBtn"),
-    resetDevicesBtn: document.getElementById("resetDevicesBtn"),
-    deleteLicenseBtn: document.getElementById("deleteLicenseBtn"),
     searchInput: document.getElementById("searchInput"),
     licenseRows: document.getElementById("licenseRows")
 };
@@ -190,56 +178,39 @@ function generateLicenseKey(productId = els.productId.value) {
 
 function clearForm() {
     selectedLicenseId = "";
-    els.licenseKey.value = generateLicenseKey();
+    lastGeneratedKeys = [];
+    els.licenseKey.value = "";
     els.licenseEmail.value = "";
-    els.ownerUid.value = "";
     els.productId.value = "ani-deepth";
-    els.licenseStatus.value = "available";
-    els.licensePlan.value = "creator";
     els.durationDays.value = "365";
     els.maxDevices.value = "1";
-    els.licenseQuantity.value = "1";
-    els.licenseNote.value = "";
     renderLicenses();
 }
 
 function fillForm(license) {
     selectedLicenseId = license.id;
+    lastGeneratedKeys = [];
     els.licenseKey.value = license.licenseKey || license.id;
     els.licenseEmail.value = license.email || "";
-    els.ownerUid.value = license.ownerUid || "";
     els.productId.value = license.productId || "ani-deepth";
-    els.licenseStatus.value = license.status || "available";
-    els.licensePlan.value = license.plan || "creator";
     els.durationDays.value = String(license.durationDays ?? 365);
     els.maxDevices.value = String(license.maxDevices || 1);
-    els.licenseQuantity.value = "1";
-    els.licenseNote.value = license.note || "";
     renderLicenses();
 }
 
 function getFormPayload() {
-    const licenseKey = normalizeLicenseKey(els.licenseKey.value);
-    const ownerUid = String(els.ownerUid.value || "").trim();
     const email = String(els.licenseEmail.value || "").trim().toLowerCase();
 
-    if (!licenseKey) {
-        throw new Error("License key là bắt buộc.");
-    }
-
     return {
-        id: licenseKey,
-        quantity: clampNumber(els.licenseQuantity.value, 1, 50, 1),
         data: {
-            licenseKey,
             email,
-            ownerUid,
+            ownerUid: "",
             productId: els.productId.value || "ani-deepth",
-            status: els.licenseStatus.value || "available",
-            plan: String(els.licensePlan.value || "creator").trim() || "creator",
+            status: "available",
+            plan: "creator",
             durationDays: clampNumber(els.durationDays.value, 0, 3650, 365),
             maxDevices: clampNumber(els.maxDevices.value, 1, 20, 1),
-            note: String(els.licenseNote.value || "").trim(),
+            note: "",
             updatedAt: serverTimestamp()
         }
     };
@@ -390,30 +361,19 @@ els.licenseForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
         const payload = getFormPayload();
-        const createdKeys = [];
+        const createdKey = await generateUniqueLicense(payload);
 
-        setStatus("Đang lưu license...");
-        if (payload.quantity > 1) {
-            for (let i = 0; i < payload.quantity; i++) {
-                createdKeys.push(await generateUniqueLicense(payload));
-            }
-            selectedLicenseId = "";
-        } else {
-            await saveLicenseDocument(payload.id, payload.data);
-            createdKeys.push(payload.id);
-            selectedLicenseId = payload.id;
-        }
-
-        lastGeneratedKeys = createdKeys;
-        els.generatedLicenses.value = createdKeys.join("\n");
-        setStatus(`Đã lưu ${createdKeys.length} license.`);
+        selectedLicenseId = createdKey;
+        lastGeneratedKeys = [createdKey];
+        els.licenseKey.value = createdKey;
+        setStatus("Đã tạo license.");
     } catch (error) {
         setStatus(error.message, true);
     }
 });
 
 els.copyLicensesBtn.addEventListener("click", async () => {
-    const value = lastGeneratedKeys.length > 0 ? lastGeneratedKeys.join("\n") : els.generatedLicenses.value;
+    const value = lastGeneratedKeys.length > 0 ? lastGeneratedKeys.join("\n") : normalizeLicenseKey(els.licenseKey.value);
     if (!value) {
         setStatus("Chưa có license key để copy.", true);
         return;
@@ -423,8 +383,8 @@ els.copyLicensesBtn.addEventListener("click", async () => {
         await navigator.clipboard.writeText(value);
         setStatus("Đã copy license key.");
     } catch (error) {
-        els.generatedLicenses.focus();
-        els.generatedLicenses.select();
+        els.licenseKey.focus();
+        els.licenseKey.select();
         setStatus("Hãy chọn key trong ô và copy thủ công.");
     }
 });
@@ -439,45 +399,11 @@ els.licenseRows.addEventListener("click", (event) => {
 
 els.searchInput.addEventListener("input", renderLicenses);
 
-els.newLicenseBtn.addEventListener("click", clearForm);
-
-els.generateKeyBtn.addEventListener("click", () => {
-    els.licenseKey.value = generateLicenseKey();
-    selectedLicenseId = "";
-});
-
 els.productId.addEventListener("change", () => {
-    if (!selectedLicenseId) {
-        els.licenseKey.value = generateLicenseKey();
-    }
-});
-
-els.resetDevicesBtn.addEventListener("click", async () => {
-    const key = normalizeLicenseKey(els.licenseKey.value);
-    if (!key) {
-        setStatus("Hãy chọn license trước.", true);
-        return;
-    }
-    await updateDoc(doc(db, "licenses", key), {
-        devices: [],
-        deviceCount: 0,
-        updatedAt: serverTimestamp()
-    });
-    setStatus("Đã reset thiết bị.");
-});
-
-els.deleteLicenseBtn.addEventListener("click", async () => {
-    const key = normalizeLicenseKey(els.licenseKey.value);
-    if (!key) {
-        setStatus("Hãy chọn license trước.", true);
-        return;
-    }
-    if (!window.confirm(`Xóa license ${key}?`)) {
-        return;
-    }
-    await deleteDoc(doc(db, "licenses", key));
-    clearForm();
-    setStatus("Đã xóa license.");
+    selectedLicenseId = "";
+    lastGeneratedKeys = [];
+    els.licenseKey.value = "";
+    renderLicenses();
 });
 
 function showLogin() {

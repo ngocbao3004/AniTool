@@ -462,6 +462,21 @@ textarea:focus {
     gap: 8px;
 }
 
+.simpleLicenseForm {
+    align-items: end;
+}
+
+.licenseKeyRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.licenseKeyRow input[readonly] {
+    cursor: text;
+}
+
 .buttonRow {
     display: flex;
     flex-wrap: wrap;
@@ -599,6 +614,10 @@ tbody tr.isSelected td {
     }
 
     .inlineInput {
+        grid-template-columns: 1fr;
+    }
+
+    .licenseKeyRow {
         grid-template-columns: 1fr;
     }
 }
