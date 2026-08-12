@@ -294,6 +294,10 @@ function formatPrice(node) {
   const currency = currentCurrency();
   const value = Number(node.dataset[currency.toLowerCase()]);
   if (!Number.isFinite(value)) return;
+  if (value === 0) {
+    node.textContent = "0 đồng / month";
+    return;
+  }
   const formatter = new Intl.NumberFormat(state.lang === "vi" ? "vi-VN" : "en-US", {
     style: "currency",
     currency,
