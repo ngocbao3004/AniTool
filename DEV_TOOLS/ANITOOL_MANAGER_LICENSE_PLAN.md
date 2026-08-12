@@ -1,5 +1,42 @@
 # AniTool Manager License Plan
 
+## Implementation Status - 2026-08-13
+
+Completed:
+
+- Cloudflare Worker Manager sign-in, account session and device binding.
+- Customer license list, redeem, current-device activation and removal APIs.
+- Firebase website callback for Google approval.
+- CMS Distribution tab and admin-only Firestore rules.
+- Manager signed-out, My Products, Add License and Credits views.
+- Google avatar, light/dark theme and DPAPI credential storage.
+- Smart Open / Update / Download action with primary-to-backup fallback.
+- Existing AniDeepth `--check` contract and online verification.
+- Legacy Manager key migration through the signed-in Gmail.
+- Local install and versioned win-x64 ZIP packaging with SHA-256 output.
+
+Production endpoints:
+
+```text
+Worker: https://anitool-license-worker.anitool-license-worker.workers.dev
+Website: https://ngocbao3004.github.io/AniTool/
+CMS: https://anitoolbase.web.app/
+```
+
+Local release artifact:
+
+```text
+PRODUCT/Windows/AniToolManager/dist/AniToolManager-0.2.0-win-x64.zip
+```
+
+Manual release checks still required:
+
+1. Sign in to Manager with the intended Google account.
+2. Create a dedicated test key in CMS using the same Gmail.
+3. Redeem the key in Manager and verify AniDeepth unlocks.
+4. Add real primary and backup download URLs in the CMS Distribution tab.
+5. Obtain a trusted Windows code-signing certificate before a public release.
+
 ## Objective
 
 Turn AniTool Manager into the single license center for customers:

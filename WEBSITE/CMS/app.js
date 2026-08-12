@@ -679,6 +679,9 @@ async function saveProductRelease() {
     if (els.releaseAvailable.checked && !primaryUrl && !backupUrl) {
         throw new Error("Cần ít nhất một link trước khi cho phép phát hành.");
     }
+    if (els.releaseAvailable.checked && !String(els.releaseVersion.value || "").trim()) {
+        throw new Error("Cần nhập phiên bản trước khi cho phép phát hành.");
+    }
 
     setReleaseFormBusy(true);
     try {
