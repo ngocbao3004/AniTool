@@ -71,12 +71,17 @@ const els = {
     statusSelectMenu: document.getElementById("statusSelectMenu"),
     statusOptionList: document.getElementById("statusOptionList"),
     licenseRows: document.getElementById("licenseRows"),
+    bulkTools: document.getElementById("bulkTools"),
+    bulkPanelToggleBtn: document.getElementById("bulkPanelToggleBtn"),
     selectAllVisible: document.getElementById("selectAllVisible"),
-    selectionCount: document.getElementById("selectionCount"),
+    bulkStatusValue: document.getElementById("bulkStatusValue"),
+    bulkStatusSelectBtn: document.getElementById("bulkStatusSelectBtn"),
+    bulkStatusSelectText: document.getElementById("bulkStatusSelectText"),
+    bulkStatusSelectMenu: document.getElementById("bulkStatusSelectMenu"),
+    bulkStatusOptionList: document.getElementById("bulkStatusOptionList"),
     bulkDayAmount: document.getElementById("bulkDayAmount"),
     bulkSubtractDays: document.getElementById("bulkSubtractDays"),
     bulkAddDays: document.getElementById("bulkAddDays"),
-    clearSelectionBtn: document.getElementById("clearSelectionBtn"),
     createTabBtn: document.getElementById("createTabBtn"),
     listTabBtn: document.getElementById("listTabBtn"),
     createTabPanel: document.getElementById("createTabPanel"),
@@ -244,28 +249,18 @@ function getProductEntries(query = "") {
 function renderProductOptions() {
     const selectedProductId = els.productId.value || "ani-deepth";
     const query = String(els.productSearchInput.value || "");
-    const productsBySoftware = new Map();
+    const productEntries = getProductEntries(query);
 
-    getProductEntries(query).forEach((product) => {
-        if (!productsBySoftware.has(product.software)) {
-            productsBySoftware.set(product.software, []);
-        }
-        productsBySoftware.get(product.software).push(product);
-    });
-
-    if (productsBySoftware.size === 0) {
+    if (productEntries.length === 0) {
         els.productOptionList.innerHTML = '<div class="smartEmpty">Không có sản phẩm phù hợp.</div>';
         return;
     }
 
-    els.productOptionList.innerHTML = Array.from(productsBySoftware.entries()).map(([software, items]) => `
-        <div class="smartSectionTitle">${escapeHtml(software)}</div>
-        ${items.map((product) => `
+    els.productOptionList.innerHTML = productEntries.map((product) => `
             <button class="smartOption${product.id === selectedProductId ? " isSelected" : ""}" type="button" data-product-id="${escapeHtml(product.id)}">
                 <span>${escapeHtml(product.name)}</span>
-                <small>${escapeHtml(product.prefix)}</small>
+                ${product.id === selectedProductId ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : ""}
             </button>
-        `).join("")}
     `).join("");
 }
 
@@ -279,6 +274,17 @@ function renderFilterOptions(target, options, selectedValue) {
             </button>
         `).join("")}
     `;
+}
+
+function renderBulkStatusOptions() {
+    const selectedValue = els.bulkStatusValue.value || "";
+
+    els.bulkStatusOptionList.innerHTML = editableStatusOptions.map((option) => `
+        <button class="smartOption${option.value === selectedValue ? " isSelected" : ""}" type="button" data-bulk-status-value="${escapeHtml(option.value)}">
+            <span>${escapeHtml(option.label)}</span>
+            ${option.value === selectedValue ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : ""}
+        </button>
+    `).join("");
 }
 
 function closeDropdown() {
@@ -752,7 +758,6 @@ function renderStatusSelect(license, effectiveStatus) {
             </select>
             <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
         </div>
-        <span class="statusHint">${escapeHtml(getStatusText(license))}</span>
     `;
 }
 
@@ -770,13 +775,13 @@ function updateSelectionUI() {
     const selectedCount = selectedLicenseIds.size;
     const visibleSelectedCount = visibleLicenseIds.filter((id) => selectedLicenseIds.has(id)).length;
 
-    els.selectionCount.textContent = `${selectedCount} đã chọn`;
     els.selectAllVisible.checked = visibleLicenseIds.length > 0 && visibleSelectedCount === visibleLicenseIds.length;
     els.selectAllVisible.indeterminate = visibleSelectedCount > 0 && visibleSelectedCount < visibleLicenseIds.length;
     const hasSelection = selectedCount > 0;
     els.bulkAddDays.disabled = !hasSelection;
     els.bulkSubtractDays.disabled = !hasSelection;
-    els.clearSelectionBtn.disabled = !hasSelection;
+    els.bulkStatusSelectBtn.disabled = !hasSelection;
+    els.bulkStatusSelectBtn.classList.toggle("isDisabled", !hasSelection);
 }
 
 function getSelectedLicenses() {
@@ -799,6 +804,51 @@ async function applyBulkDayDelta(direction) {
     setStatus(`Đang cập nhật ${targets.length} license...`);
     await Promise.all(targets.map((license) => applyLicenseDayDelta(license, delta)));
     setStatus(`Đã cập nhật ${targets.length} license.`);
+}
+
+function setBulkStatusValue(value = "") {
+    const option = editableStatusOptions.find((item) => item.value === value);
+    els.bulkStatusValue.value = option ? option.value : "";
+    els.bulkStatusSelectText.textContent = option ? option.label : "Trạng thái";
+    renderBulkStatusOptions();
+}
+
+async function applyBulkStatus(nextStatus) {
+    const normalizedStatus = String(nextStatus || "").toLowerCase();
+    const option = editableStatusOptions.find((item) => item.value === normalizedStatus);
+    const targets = getSelectedLicenses();
+
+    if (!option) {
+        return;
+    }
+    if (targets.length === 0) {
+        setStatus("Chưa chọn license nào để đổi trạng thái.", true);
+        return;
+    }
+
+    const editableTargets = targets.filter((license) => {
+        const currentStatus = String(license.status || "available").toLowerCase();
+        return currentStatus !== normalizedStatus
+            && getEditableStatusOptions(license).some((item) => item.value === normalizedStatus);
+    });
+
+    if (editableTargets.length === 0) {
+        setStatus("Không có license phù hợp để đổi trạng thái.");
+        return;
+    }
+    if ((normalizedStatus === "voided" || normalizedStatus === "blocked")
+        && !window.confirm(`Áp dụng "${option.label}" cho ${editableTargets.length} license?`)) {
+        return;
+    }
+
+    setStatus(`Đang đổi trạng thái ${editableTargets.length} license...`);
+    await Promise.all(editableTargets.map((license) => updateLicenseFields(
+        license,
+        buildStatusFields(license, normalizedStatus),
+        "bulk-status-change",
+        { from: String(license.status || "available").toLowerCase(), to: normalizedStatus }
+    )));
+    setStatus(`Đã đổi trạng thái ${editableTargets.length} license.`);
 }
 
 function renderLicenses() {
@@ -1091,19 +1141,25 @@ els.licenseRows.addEventListener("keydown", (event) => {
 els.searchInput.addEventListener("input", renderLicenses);
 
 els.selectAllVisible.addEventListener("change", () => {
-    visibleLicenseIds.forEach((id) => {
-        if (els.selectAllVisible.checked) {
-            selectedLicenseIds.add(id);
-        } else {
-            selectedLicenseIds.delete(id);
-        }
-    });
+    if (els.selectAllVisible.checked) {
+        visibleLicenseIds.forEach((id) => selectedLicenseIds.add(id));
+    } else {
+        selectedLicenseIds.clear();
+    }
     renderLicenses();
 });
 
-els.clearSelectionBtn.addEventListener("click", () => {
-    selectedLicenseIds.clear();
-    renderLicenses();
+els.bulkPanelToggleBtn.addEventListener("click", () => {
+    const shouldShow = els.bulkTools.hidden;
+    els.bulkTools.hidden = !shouldShow;
+    els.bulkPanelToggleBtn.classList.toggle("isActive", shouldShow);
+    els.bulkPanelToggleBtn.classList.add("isSpinning");
+    els.bulkPanelToggleBtn.setAttribute("aria-expanded", shouldShow ? "true" : "false");
+    els.bulkPanelToggleBtn.setAttribute("aria-label", shouldShow ? "Ẩn công cụ hàng loạt" : "Mở công cụ hàng loạt");
+});
+
+els.bulkPanelToggleBtn.addEventListener("animationend", () => {
+    els.bulkPanelToggleBtn.classList.remove("isSpinning");
 });
 
 els.bulkAddDays.addEventListener("click", async () => {
@@ -1119,6 +1175,35 @@ els.bulkSubtractDays.addEventListener("click", async () => {
         await applyBulkDayDelta(-1);
     } catch (error) {
         setStatus(error.message, true);
+    }
+});
+
+els.bulkStatusSelectBtn.addEventListener("click", () => {
+    if (els.bulkStatusSelectBtn.disabled) {
+        return;
+    }
+
+    toggleDropdown({
+        button: els.bulkStatusSelectBtn,
+        menu: els.bulkStatusSelectMenu
+    });
+});
+
+els.bulkStatusOptionList.addEventListener("click", async (event) => {
+    const option = event.target.closest("[data-bulk-status-value]");
+    if (!option) {
+        return;
+    }
+
+    const statusValue = option.getAttribute("data-bulk-status-value");
+    setBulkStatusValue(statusValue);
+    closeDropdown();
+    try {
+        await applyBulkStatus(statusValue);
+    } catch (error) {
+        setStatus(error.message, true);
+    } finally {
+        setBulkStatusValue("");
     }
 });
 
@@ -1266,6 +1351,7 @@ updateProductSelectText();
 renderProductOptions();
 renderFilterOptions(els.softwareOptionList, softwareFilterOptions, els.softwareFilter.value);
 renderFilterOptions(els.statusOptionList, statusFilterOptions, els.statusFilter.value);
+renderBulkStatusOptions();
 applyTheme(getStoredTheme());
 
 onAuthStateChanged(auth, async (user) => {

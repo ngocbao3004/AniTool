@@ -96,11 +96,6 @@
 
             <div class="workspacePanels">
                 <section id="createTabPanel" class="panel licenseEditor tabPanel isActive" role="tabpanel" aria-labelledby="createTabBtn">
-                    <div class="panelHeader">
-                        <div>
-                            <h2>Tạo license key</h2>
-                        </div>
-                    </div>
                     <form id="licenseForm" class="formGrid simpleLicenseForm">
                         <label class="wide">
                             <span>Sản phẩm</span>
@@ -111,7 +106,7 @@
                                     <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
                                 </button>
                                 <div id="productSelectMenu" class="smartSelectMenu" hidden>
-                                    <input id="productSearchInput" class="smartSelectSearch" type="search" placeholder="Tìm sản phẩm hoặc phần mềm">
+                                    <input id="productSearchInput" class="smartSelectSearch" type="search" placeholder="Tìm sản phẩm">
                                     <div id="productOptionList" class="smartOptionList"></div>
                                 </div>
                             </div>
@@ -147,10 +142,7 @@
                 </section>
 
                 <section id="listTabPanel" class="panel licenseList tabPanel" role="tabpanel" aria-labelledby="listTabBtn" hidden>
-                    <div class="panelHeader">
-                        <div>
-                            <h2>Danh sách license</h2>
-                        </div>
+                    <div class="panelHeader listPanelHeader">
                         <div class="listTools">
                             <input id="searchInput" type="search" placeholder="Tìm key, email, liên hệ, sản phẩm">
                             <input id="softwareFilter" type="hidden" value="all">
@@ -173,18 +165,29 @@
                                     <div id="statusOptionList" class="smartOptionList"></div>
                                 </div>
                             </div>
+                            <button id="bulkPanelToggleBtn" class="iconButton bulkToggleButton" type="button" aria-label="Mở công cụ hàng loạt" aria-controls="bulkTools" aria-expanded="false" title="Công cụ hàng loạt">
+                                <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="bulkTools">
+                    <div id="bulkTools" class="bulkTools" hidden>
                         <label class="selectVisible">
                             <input id="selectAllVisible" type="checkbox">
-                            <span>Chọn trang này</span>
+                            <span>Chọn</span>
                         </label>
-                        <span id="selectionCount" class="selectionCount">0 đã chọn</span>
+                        <input id="bulkStatusValue" type="hidden" value="">
+                        <div id="bulkStatusDropdown" class="smartSelect smartSelectCompact">
+                            <button id="bulkStatusSelectBtn" class="smartSelectButton" type="button" aria-expanded="false" disabled>
+                                <span id="bulkStatusSelectText">Trạng thái</span>
+                                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div id="bulkStatusSelectMenu" class="smartSelectMenu" hidden>
+                                <div id="bulkStatusOptionList" class="smartOptionList"></div>
+                            </div>
+                        </div>
+                        <button id="bulkSubtractDays" type="button" disabled aria-label="Trừ ngày">-</button>
                         <input id="bulkDayAmount" class="bulkDayInput" type="number" min="1" max="36500" value="1" aria-label="Số ngày cần cộng hoặc trừ">
-                        <button id="bulkSubtractDays" type="button">Trừ ngày</button>
-                        <button id="bulkAddDays" class="primaryButton" type="button">Cộng ngày</button>
-                        <button id="clearSelectionBtn" type="button">Bỏ chọn</button>
+                        <button id="bulkAddDays" class="primaryButton" type="button" disabled aria-label="Cộng ngày">+</button>
                     </div>
                     <div class="tableWrap">
                         <table>

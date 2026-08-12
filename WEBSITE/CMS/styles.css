@@ -16,6 +16,10 @@
     --ok: #8ccf9b;
     --shadow: rgba(0, 0, 0, 0.34);
     --soft-shadow: 0 28px 70px rgba(0, 0, 0, 0.24);
+    --radius-outer: 8px;
+    --radius-gap: 2px;
+    --radius-inner: calc(var(--radius-outer) - var(--radius-gap));
+    --radius-control: 7px;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     color: var(--text);
     background: var(--bg);
@@ -67,7 +71,7 @@ textarea {
 button {
     min-height: 36px;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-control);
     background: color-mix(in srgb, var(--text) 9%, transparent);
     color: var(--text);
     padding: 0 13px;
@@ -123,7 +127,7 @@ button:focus-visible {
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    border-radius: 8px;
+    border-radius: var(--radius-outer);
     background: color-mix(in srgb, var(--surface) 86%, transparent);
     box-shadow: var(--soft-shadow), inset 0 -1px var(--line);
     padding: 14px;
@@ -144,7 +148,7 @@ button:focus-visible {
     height: 42px;
     min-width: 42px;
     place-items: center;
-    border-radius: 8px;
+    border-radius: var(--radius-inner);
     background: var(--accent);
     color: var(--accent-on);
     font-size: 12px;
@@ -197,12 +201,45 @@ label span,
     padding: 0;
 }
 
+.bulkToggleButton {
+    width: 40px;
+    min-width: 40px;
+    aspect-ratio: 1;
+    justify-self: end;
+}
+
+.bulkToggleButton i {
+    transition: color 160ms ease, transform 220ms ease;
+}
+
+.bulkToggleButton.isActive {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--accent);
+}
+
+.bulkToggleButton.isActive i {
+    transform: rotate(90deg);
+}
+
+.bulkToggleButton.isSpinning i {
+    animation: gearSpin 420ms ease;
+}
+
+@keyframes gearSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(180deg);
+    }
+}
+
 .notice,
 .statusText,
 .heroPanel,
 .panel,
 .dashboardIntro {
-    border-radius: 8px;
+    border-radius: var(--radius-outer);
     background: color-mix(in srgb, var(--surface) 94%, transparent);
     box-shadow: var(--soft-shadow);
 }
@@ -297,7 +334,7 @@ code {
     display: grid;
     gap: 6px;
     margin-top: 14px;
-    border-radius: 8px;
+    border-radius: var(--radius-inner);
     background: color-mix(in srgb, var(--text) 7%, transparent);
     padding: 12px;
 }
@@ -344,7 +381,7 @@ code {
 
 .metricGrid div {
     min-width: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-inner);
     background: color-mix(in srgb, var(--text) 7%, transparent);
     padding: 14px;
 }
@@ -371,7 +408,7 @@ code {
     width: min(460px, 100%);
     gap: 4px;
     margin-top: 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-outer);
     background: color-mix(in srgb, var(--text) 7%, transparent);
     padding: 4px;
 }
@@ -415,6 +452,10 @@ code {
     margin-bottom: 16px;
 }
 
+.listPanelHeader {
+    justify-content: flex-end;
+}
+
 .panelHeader h2 {
     font-size: 17px;
 }
@@ -425,9 +466,9 @@ code {
 
 .listTools {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(150px, auto) minmax(150px, auto);
+    grid-template-columns: minmax(180px, 1fr) minmax(150px, auto) minmax(150px, auto) 40px;
     gap: 8px;
-    width: min(720px, 100%);
+    width: min(780px, 100%);
 }
 
 .listTools input {
@@ -436,10 +477,19 @@ code {
 
 .bulkTools {
     display: grid;
-    grid-template-columns: auto auto minmax(74px, 90px) auto auto auto;
+    grid-template-columns: auto minmax(150px, 210px) 36px minmax(64px, 84px) 36px;
     gap: 8px;
     align-items: center;
     margin-bottom: 10px;
+}
+
+.bulkTools > button {
+    min-width: 36px;
+    padding: 0;
+}
+
+.bulkTools .smartSelect {
+    width: 100%;
 }
 
 .selectVisible {
@@ -457,14 +507,8 @@ code {
     accent-color: var(--accent);
 }
 
-.selectionCount {
-    color: var(--muted-2);
-    font-size: 12px;
-    font-weight: 800;
-}
-
 .bulkDayInput {
-    max-width: 90px;
+    max-width: 84px;
     text-align: center;
 }
 
@@ -496,12 +540,23 @@ textarea {
     width: 100%;
     min-width: 0;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-control);
     background: color-mix(in srgb, var(--text) 7%, transparent);
     color: var(--text);
     padding: 10px 11px;
     outline: 1px solid transparent;
     transition: background 150ms ease, outline-color 150ms ease, box-shadow 150ms ease;
+}
+
+input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
 }
 
 select {
@@ -553,6 +608,12 @@ textarea:focus {
     text-align: left;
 }
 
+.smartSelectButton:disabled {
+    cursor: default;
+    opacity: 0.52;
+    transform: none;
+}
+
 .smartSelectButton:hover,
 .smartSelectButton:focus-visible,
 .smartSelectButton[aria-expanded="true"] {
@@ -585,9 +646,9 @@ textarea:focus {
     display: grid;
     width: min(520px, calc(100vw - 36px));
     gap: 8px;
-    border-radius: 8px;
+    border-radius: var(--radius-outer);
     background: color-mix(in srgb, var(--surface) 98%, transparent);
-    box-shadow: var(--soft-shadow), inset 0 0 0 1px var(--line-strong);
+    box-shadow: var(--soft-shadow);
     padding: 8px;
 }
 
@@ -597,6 +658,7 @@ textarea:focus {
 
 .smartSelectSearch {
     min-height: 38px;
+    border-radius: var(--radius-inner);
 }
 
 .smartOptionList {
@@ -608,7 +670,10 @@ textarea:focus {
 }
 
 .smartSectionTitle {
-    padding: 8px 8px 4px;
+    margin: 2px 2px 3px;
+    border-radius: var(--radius-inner);
+    background: color-mix(in srgb, var(--text) 5%, transparent);
+    padding: 6px 8px;
     color: var(--muted-2);
     font-size: 10px;
     font-weight: 850;
@@ -621,6 +686,7 @@ textarea:focus {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
     align-items: center;
+    border-radius: var(--radius-inner);
     background: transparent;
     color: var(--text);
     padding: 0 9px;
@@ -720,7 +786,7 @@ textarea:focus {
 
 .tableWrap {
     overflow: auto;
-    border-radius: 8px;
+    border-radius: var(--radius-outer);
     background: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
@@ -800,7 +866,7 @@ tbody tr.isSelected td {
     display: inline-flex;
     min-width: 82px;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: var(--radius-inner);
     padding: 3px 8px;
     background: color-mix(in srgb, var(--text) 10%, transparent);
     color: var(--muted);
@@ -827,18 +893,10 @@ tbody tr.isSelected td {
 .statusSelect {
     min-height: 32px;
     appearance: none;
-    border-radius: 8px;
+    border-radius: var(--radius-inner);
     padding: 6px 26px 6px 9px;
     font-size: 12px;
     font-weight: 760;
-}
-
-.statusHint {
-    display: block;
-    margin-top: 4px;
-    color: var(--muted-2);
-    font-size: 11px;
-    font-weight: 650;
 }
 
 .durationControl {
@@ -850,7 +908,7 @@ tbody tr.isSelected td {
 
 .durationButton {
     min-height: 28px;
-    border-radius: 7px;
+    border-radius: var(--radius-inner);
     padding: 0;
 }
 
@@ -951,16 +1009,28 @@ tbody tr.isSelected td {
     }
 
     .listTools {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr) 40px;
+    }
+
+    .listTools > input[type="search"],
+    #softwareDropdown {
+        grid-column: 1 / -1;
+    }
+
+    #statusDropdown {
+        grid-column: 1;
+    }
+
+    .bulkToggleButton {
+        grid-column: 2;
     }
 
     .bulkTools {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: auto minmax(0, 1fr) 36px minmax(58px, 72px) 36px;
     }
 
-    .selectVisible,
-    .selectionCount {
-        grid-column: 1 / -1;
+    .selectVisible {
+        justify-content: center;
     }
 
     .smartSelectMenu,
@@ -1002,7 +1072,7 @@ tbody tr.isSelected td {
 
     tbody tr {
         display: grid;
-        border-radius: 8px;
+        border-radius: var(--radius-outer);
         background: color-mix(in srgb, var(--text) 6%, transparent);
         box-shadow: inset 0 0 0 1px var(--line);
         padding: 10px 12px;
