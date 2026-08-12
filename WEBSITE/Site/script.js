@@ -93,13 +93,14 @@ const translations = {
     "account.guestTitle": "Sign in or register",
     "account.guestCopy": "Your first Google sign-in creates the account. No separate password is needed.",
     "account.google": "Continue with Google",
-    "account.redeemLabel": "Redeem key",
-    "account.redeemButton": "Redeem",
-    "account.redeemEmpty": "Enter a redeem key.",
-    "account.redeemChecking": "Checking redeem key...",
-    "account.redeemSuccess": "License added to your account.",
-    "account.redeemMissing": "This redeem key does not exist.",
-    "account.redeemUsed": "This redeem key has already been used.",
+    "account.licenseLabel": "License key",
+    "account.licenseButton": "Activate",
+    "account.licenseEmpty": "Enter a license key.",
+    "account.licenseChecking": "Checking license key...",
+    "account.licenseSuccess": "License activated.",
+    "account.licenseMissing": "This license key does not exist.",
+    "account.licenseUsed": "This license key has already been used.",
+    "account.licenseUnavailable": "This license cannot be activated.",
     "account.signingIn": "Opening Google sign-in...",
     "account.redirecting": "Redirecting to Google...",
     "account.signedInStatus": "Signed in successfully.",
@@ -190,13 +191,14 @@ const translations = {
     "account.guestTitle": "\u0110\u0103ng nh\u1eadp ho\u1eb7c \u0111\u0103ng k\u00fd",
     "account.guestCopy": "L\u1ea7n \u0111\u0103ng nh\u1eadp Google \u0111\u1ea7u ti\u00ean s\u1ebd t\u1ea1o t\u00e0i kho\u1ea3n. Kh\u00f4ng c\u1ea7n m\u1eadt kh\u1ea9u ri\u00eang.",
     "account.google": "Ti\u1ebfp t\u1ee5c v\u1edbi Google",
-    "account.redeemLabel": "Nh\u1eadp key",
-    "account.redeemButton": "K\u00edch ho\u1ea1t",
-    "account.redeemEmpty": "Nh\u1eadp redeem key tr\u01b0\u1edbc.",
-    "account.redeemChecking": "\u0110ang ki\u1ec3m tra redeem key...",
-    "account.redeemSuccess": "License \u0111\u00e3 \u0111\u01b0\u1ee3c g\u1eafn v\u00e0o t\u00e0i kho\u1ea3n.",
-    "account.redeemMissing": "Redeem key n\u00e0y kh\u00f4ng t\u1ed3n t\u1ea1i.",
-    "account.redeemUsed": "Redeem key n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c s\u1eed d\u1ee5ng.",
+    "account.licenseLabel": "License key",
+    "account.licenseButton": "K\u00edch ho\u1ea1t",
+    "account.licenseEmpty": "Nh\u1eadp license key tr\u01b0\u1edbc.",
+    "account.licenseChecking": "\u0110ang ki\u1ec3m tra license key...",
+    "account.licenseSuccess": "License \u0111\u00e3 \u0111\u01b0\u1ee3c k\u00edch ho\u1ea1t.",
+    "account.licenseMissing": "License key n\u00e0y kh\u00f4ng t\u1ed3n t\u1ea1i.",
+    "account.licenseUsed": "License key n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c s\u1eed d\u1ee5ng.",
+    "account.licenseUnavailable": "License n\u00e0y kh\u00f4ng th\u1ec3 k\u00edch ho\u1ea1t.",
     "account.signingIn": "\u0110ang m\u1edf \u0111\u0103ng nh\u1eadp Google...",
     "account.redirecting": "\u0110ang chuy\u1ec3n sang Google...",
     "account.signedInStatus": "\u0110\u0103ng nh\u1eadp th\u00e0nh c\u00f4ng.",
@@ -254,9 +256,9 @@ const accountLicenseCount = document.querySelector("[data-license-count]");
 const accountState = document.querySelector("[data-account-state]");
 const accountLicenseList = document.querySelector("[data-license-list]");
 const accountStatus = document.querySelector("[data-account-status]");
-const redeemForm = document.querySelector("[data-redeem-form]");
-const redeemInput = document.querySelector("[data-redeem-input]");
-const redeemSubmit = document.querySelector("[data-redeem-submit]");
+const licenseForm = document.querySelector("[data-license-form]");
+const licenseInput = document.querySelector("[data-license-input]");
+const licenseSubmit = document.querySelector("[data-license-submit]");
 const siteGoogleButton = document.querySelector("[data-site-google]");
 const siteSignOutButton = document.querySelector("[data-site-signout]");
 let customerLicenses = [];
@@ -379,7 +381,7 @@ function getLicenseStatusLabel(status) {
   return label === key ? status || "active" : label;
 }
 
-function normalizeRedeemCode(value) {
+function normalizeLicenseKey(value) {
   return String(value || "")
     .trim()
     .toUpperCase()
@@ -402,7 +404,7 @@ function getLicenseEndDate(license) {
   const durationDays = Number(license.durationDays || 0);
   if (durationDays <= 0) return null;
 
-  const start = toDateFromFirestore(license.redeemedAt || license.createdAt);
+  const start = toDateFromFirestore(license.activatedAt || license.createdAt);
   if (!start) return null;
 
   const end = new Date(start.getTime());
@@ -440,9 +442,10 @@ function getExpiryLabel(license) {
   return formatDateLabel(end);
 }
 
-function getRedeemErrorMessage(error) {
-  if (error?.message === "redeem/missing") return t("account.redeemMissing");
-  if (error?.message === "redeem/used") return t("account.redeemUsed");
+function getLicenseActivationErrorMessage(error) {
+  if (error?.message === "license/missing") return t("account.licenseMissing");
+  if (error?.message === "license/used") return t("account.licenseUsed");
+  if (error?.message === "license/unavailable") return t("account.licenseUnavailable");
   return getAuthErrorMessage(error);
 }
 
@@ -575,53 +578,35 @@ function showUserAccount(user) {
   });
 }
 
-async function redeemCodeForCurrentUser(code) {
+async function activateLicenseForCurrentUser(key) {
   if (!currentUser) {
     throw new Error("auth/not-signed-in");
   }
 
   await runTransaction(siteDb, async (transaction) => {
-    const codeRef = doc(siteDb, "redeemCodes", code);
-    const licenseRef = doc(siteDb, "licenses", code);
-    const codeSnap = await transaction.get(codeRef);
-
-    if (!codeSnap.exists()) {
-      throw new Error("redeem/missing");
-    }
-
-    const codeData = codeSnap.data();
-    if ((codeData.status || "available") !== "available") {
-      throw new Error("redeem/used");
-    }
-
+    const licenseRef = doc(siteDb, "licenses", key);
     const licenseSnap = await transaction.get(licenseRef);
-    if (licenseSnap.exists()) {
-      throw new Error("redeem/used");
+
+    if (!licenseSnap.exists()) {
+      throw new Error("license/missing");
     }
 
-    const durationDays = Number(codeData.durationDays || 0);
-    const maxDevices = Number(codeData.maxDevices || 1);
-    transaction.set(licenseRef, {
-      licenseKey: code,
-      sourceCode: code,
+    const licenseData = licenseSnap.data();
+    if (licenseData.ownerUid === currentUser.uid) {
+      return;
+    }
+    if (licenseData.ownerUid) {
+      throw new Error("license/used");
+    }
+    if ((licenseData.status || "available") !== "available") {
+      throw new Error("license/unavailable");
+    }
+
+    transaction.update(licenseRef, {
       ownerUid: currentUser.uid,
       email: currentUser.email || "",
-      productId: codeData.productId || "ani-deepth",
-      plan: codeData.plan || "creator",
       status: "active",
-      durationDays: Number.isFinite(durationDays) ? durationDays : 0,
-      maxDevices: Number.isFinite(maxDevices) ? Math.max(1, maxDevices) : 1,
-      devices: [],
-      deviceCount: 0,
-      redeemedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    transaction.update(codeRef, {
-      status: "redeemed",
-      redeemedBy: currentUser.uid,
-      redeemedByEmail: currentUser.email || "",
-      redeemedAt: serverTimestamp(),
+      activatedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
   });
@@ -654,27 +639,27 @@ document.querySelectorAll("[data-lang-option]").forEach((button) => {
     applyLanguage();
   });
 });
-redeemInput?.addEventListener("input", () => {
-  redeemInput.value = normalizeRedeemCode(redeemInput.value);
+licenseInput?.addEventListener("input", () => {
+  licenseInput.value = normalizeLicenseKey(licenseInput.value);
 });
-redeemForm?.addEventListener("submit", async (event) => {
+licenseForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const code = normalizeRedeemCode(redeemInput?.value);
-  if (!code) {
-    setAccountStatus(t("account.redeemEmpty"), true);
+  const key = normalizeLicenseKey(licenseInput?.value);
+  if (!key) {
+    setAccountStatus(t("account.licenseEmpty"), true);
     return;
   }
 
   try {
-    setAccountStatus(t("account.redeemChecking"));
-    if (redeemSubmit) redeemSubmit.disabled = true;
-    await redeemCodeForCurrentUser(code);
-    if (redeemInput) redeemInput.value = "";
-    setAccountStatus(t("account.redeemSuccess"));
+    setAccountStatus(t("account.licenseChecking"));
+    if (licenseSubmit) licenseSubmit.disabled = true;
+    await activateLicenseForCurrentUser(key);
+    if (licenseInput) licenseInput.value = "";
+    setAccountStatus(t("account.licenseSuccess"));
   } catch (error) {
-    setAccountStatus(getRedeemErrorMessage(error), true);
+    setAccountStatus(getLicenseActivationErrorMessage(error), true);
   } finally {
-    if (redeemSubmit) redeemSubmit.disabled = false;
+    if (licenseSubmit) licenseSubmit.disabled = false;
   }
 });
 siteGoogleButton?.addEventListener("click", async () => {

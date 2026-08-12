@@ -25,57 +25,30 @@ service cloud.firestore {
 
     match /licenses/{licenseId} {
       allow read, write: if isAdmin();
-      allow get, list: if signedIn() && resource.data.ownerUid == request.auth.uid;
-      allow create: if signedIn() &&
-        request.resource.data.keys().hasOnly([
-          "licenseKey",
-          "sourceCode",
-          "ownerUid",
-          "email",
-          "productId",
-          "plan",
-          "status",
-          "durationDays",
-          "maxDevices",
-          "devices",
-          "deviceCount",
-          "redeemedAt",
-          "createdAt",
-          "updatedAt"
-        ]) &&
-        licenseId == request.resource.data.licenseKey &&
-        request.resource.data.sourceCode == licenseId &&
-        request.resource.data.ownerUid == request.auth.uid &&
-        request.resource.data.status == "active" &&
-        request.resource.data.devices is list &&
-        request.resource.data.deviceCount == 0 &&
-        request.resource.data.productId == get(/databases/$(database)/documents/redeemCodes/$(licenseId)).data.productId &&
-        request.resource.data.plan == get(/databases/$(database)/documents/redeemCodes/$(licenseId)).data.plan &&
-        request.resource.data.durationDays == get(/databases/$(database)/documents/redeemCodes/$(licenseId)).data.durationDays &&
-        request.resource.data.maxDevices == get(/databases/$(database)/documents/redeemCodes/$(licenseId)).data.maxDevices &&
-        request.resource.data.createdAt == request.time &&
-        request.resource.data.updatedAt == request.time &&
-        request.resource.data.redeemedAt == request.time &&
-        get(/databases/$(database)/documents/redeemCodes/$(licenseId)).data.status == "available" &&
-        getAfter(/databases/$(database)/documents/redeemCodes/$(licenseId)).data.status == "redeemed" &&
-        getAfter(/databases/$(database)/documents/redeemCodes/$(licenseId)).data.redeemedBy == request.auth.uid;
-    }
 
-    match /redeemCodes/{codeId} {
-      allow read, write: if isAdmin();
-      allow get: if signedIn();
+      allow get: if signedIn() &&
+        (
+          resource.data.ownerUid == request.auth.uid ||
+          resource.data.status == "available"
+        );
+
+      allow list: if signedIn() &&
+        resource.data.ownerUid == request.auth.uid;
+
       allow update: if signedIn() &&
         resource.data.status == "available" &&
+        resource.data.ownerUid == "" &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "ownerUid",
+          "email",
           "status",
-          "redeemedBy",
-          "redeemedByEmail",
-          "redeemedAt",
+          "activatedAt",
           "updatedAt"
         ]) &&
-        request.resource.data.status == "redeemed" &&
-        request.resource.data.redeemedBy == request.auth.uid &&
-        request.resource.data.redeemedAt == request.time &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.email is string &&
+        request.resource.data.status == "active" &&
+        request.resource.data.activatedAt == request.time &&
         request.resource.data.updatedAt == request.time;
     }
 

@@ -1,199 +1,204 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AniTool CMS</title>
+    <script>
+        const savedTheme = localStorage.getItem("anitoolCmsTheme");
+        const systemTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = savedTheme || systemTheme;
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
     <main class="shell">
         <section class="topbar">
-            <div>
-                <h1>AniTool CMS</h1>
-                <p>License manager for Ani Deepth.</p>
+            <div class="brandBlock">
+                <span class="brandMark">ANI</span>
+                <div>
+                    <h1>AniTool CMS</h1>
+                    <p>Quản lý license key và quyền dùng sản phẩm.</p>
+                </div>
             </div>
             <div class="session">
-                <span id="userEmail">Not signed in</span>
-                <button id="signOutBtn" type="button" hidden>Sign Out</button>
+                <button id="themeToggleBtn" class="iconButton" type="button" title="Đổi giao diện" aria-label="Đổi giao diện">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </button>
+                <span id="userEmail">Chưa đăng nhập</span>
+                <button id="signOutBtn" type="button" hidden>Đăng xuất</button>
             </div>
         </section>
 
         <section id="setupNotice" class="notice" hidden>
-            Fill <code>firebase-config.js</code>, enable Firebase Auth Google provider, then create an <code>admins/{uid}</code> document.
+            Chưa cấu hình Firebase. Hãy điền <code>firebase-config.js</code>, bật Google Sign-in, rồi tạo document <code>admins/{uid}</code>.
         </section>
 
-        <section id="loginPanel" class="panel loginPanel">
-            <h2>Admin Login</h2>
-            <p class="panelCopy">Sign in with a Google account that exists in <code>admins/{uid}</code>.</p>
-            <button id="googleSignInBtn" class="googleButton" type="button">
-                <span class="googleMark">G</span>
-                <span>Continue with Google</span>
-            </button>
-            <p class="microNote">First login creates the Firebase user. Copy that UID in Firebase Authentication, then create the matching admin document.</p>
+        <section id="loginPanel" class="authArea">
+            <article id="loginCard" class="heroPanel loginPanel">
+                <span class="eyebrow">Admin only</span>
+                <h2>Đăng nhập CMS</h2>
+                <p class="panelCopy">Dùng Gmail đã được cấp quyền trong <code>admins/{uid}</code> để vào khu vực tạo license.</p>
+                <button id="googleSignInBtn" class="googleButton" type="button">
+                    <span class="googleMark">G</span>
+                    <span>Đăng nhập bằng Google</span>
+                </button>
+                <p class="microNote">Nếu đây là lần đầu đăng nhập, Firebase sẽ tạo UID. Sau đó thêm UID này vào collection <code>admins</code>.</p>
+            </article>
+
+            <article id="accessPanel" class="heroPanel accessPanel" hidden>
+                <span class="eyebrow">Chưa có quyền</span>
+                <h2>Tài khoản này chưa phải admin</h2>
+                <p class="panelCopy">Copy UID bên dưới, vào Firestore tạo document <code>admins/{uid}</code>, rồi đăng nhập lại.</p>
+                <div class="identityBox">
+                    <span>Email</span>
+                    <strong id="accessEmail">-</strong>
+                </div>
+                <div class="identityBox">
+                    <span>UID</span>
+                    <strong id="accessUid">-</strong>
+                </div>
+                <div class="buttonRow">
+                    <button id="copyUidBtn" class="primaryButton" type="button">Copy UID</button>
+                    <button id="retryAdminBtn" type="button">Kiểm tra lại</button>
+                </div>
+            </article>
         </section>
 
         <section id="adminPanel" class="workspace" hidden>
-            <div class="panelStack">
-                <section class="panel redeemEditor">
-                    <div class="panelHeader">
-                        <h2>Redeem Codes</h2>
-                        <button id="copyCodesBtn" type="button">Copy Last</button>
+            <section class="dashboardIntro">
+                <div>
+                    <span class="eyebrow">License desk</span>
+                    <h2>Bảng điều khiển AniTool</h2>
+                    <p>Tạo license sau khi khách thanh toán, gửi key cho khách, theo dõi key nào đã kích hoạt và reset máy khi cần.</p>
+                </div>
+                <div class="metricGrid">
+                    <div>
+                        <span>Tổng license</span>
+                        <strong id="licenseCount">0</strong>
                     </div>
-                    <form id="redeemForm" class="formGrid">
-                        <label>
-                            <span>Product</span>
-                            <select id="redeemProductId">
-                                <option value="ani-deepth">AniDeepth</option>
-                                <option value="ani-layout">Ani Layout</option>
-                                <option value="ani-anim">Ani Anim</option>
-                                <option value="ani-voice-check">Ani Voice Check</option>
-                            </select>
-                        </label>
-                        <label>
-                            <span>Plan</span>
-                            <input id="redeemPlan" type="text" value="creator" autocomplete="off">
-                        </label>
-                        <label>
-                            <span>Days</span>
-                            <input id="redeemDays" type="number" min="0" max="3650" value="365">
-                        </label>
-                        <label>
-                            <span>Max Devices</span>
-                            <input id="redeemMaxDevices" type="number" min="1" max="20" value="1">
-                        </label>
-                        <label>
-                            <span>Quantity</span>
-                            <input id="redeemQuantity" type="number" min="1" max="50" value="1">
-                        </label>
-                        <label class="wide">
-                            <span>Note</span>
-                            <textarea id="redeemNote" rows="2" placeholder="Payment note, customer name, or invoice id"></textarea>
-                        </label>
-                        <label class="wide">
-                            <span>Generated</span>
-                            <textarea id="generatedCodes" rows="4" readonly placeholder="Generated keys appear here"></textarea>
-                        </label>
-                        <div class="buttonRow">
-                            <button class="primaryButton" type="submit">Generate Redeem Key</button>
-                        </div>
-                    </form>
-                </section>
+                    <div>
+                        <span>Chưa kích hoạt</span>
+                        <strong id="availableCount">0</strong>
+                    </div>
+                    <div>
+                        <span>Đang dùng</span>
+                        <strong id="activeCount">0</strong>
+                    </div>
+                </div>
+            </section>
 
-                <section class="panel licenseEditor">
-                    <div class="panelHeader">
-                        <h2>Manual License</h2>
-                        <button id="newLicenseBtn" type="button">New</button>
-                    </div>
-                    <form id="licenseForm" class="formGrid">
-                        <label>
-                            <span>License Key</span>
-                            <div class="inlineInput">
-                                <input id="licenseKey" type="text" autocomplete="off" required>
-                                <button id="generateKeyBtn" type="button">Generate</button>
+            <div class="workspaceGrid">
+                <div class="panelStack">
+                    <section class="panel licenseEditor">
+                        <div class="panelHeader">
+                            <div>
+                                <span class="panelKicker">Bán hàng</span>
+                                <h2>Tạo license key</h2>
                             </div>
-                        </label>
-                        <label>
-                            <span>Email</span>
-                            <input id="licenseEmail" type="email" autocomplete="off" required>
-                        </label>
-                        <label>
-                            <span>Owner UID</span>
-                            <input id="ownerUid" type="text" autocomplete="off" placeholder="Firebase user UID">
-                        </label>
-                        <label>
-                            <span>Product</span>
-                            <select id="productId">
-                                <option value="ani-deepth">AniDeepth</option>
-                                <option value="ani-layout">Ani Layout</option>
-                                <option value="ani-anim">Ani Anim</option>
-                                <option value="ani-voice-check">Ani Voice Check</option>
-                            </select>
-                        </label>
-                        <label>
-                            <span>Status</span>
-                            <select id="licenseStatus">
-                                <option value="active">Active</option>
-                                <option value="blocked">Blocked</option>
-                                <option value="expired">Expired</option>
-                            </select>
-                        </label>
-                        <label>
-                            <span>Plan</span>
-                            <input id="licensePlan" type="text" value="pro" autocomplete="off">
-                        </label>
-                        <label>
-                            <span>Expires</span>
-                            <input id="expiresAt" type="date">
-                        </label>
-                        <label>
-                            <span>Max Devices</span>
-                            <input id="maxDevices" type="number" min="1" max="20" value="2">
-                        </label>
-                        <label class="wide">
-                            <span>Note</span>
-                            <textarea id="licenseNote" rows="3"></textarea>
-                        </label>
-                        <div class="buttonRow">
-                            <button class="primaryButton" type="submit">Save License</button>
-                            <button id="resetDevicesBtn" type="button">Reset Devices</button>
-                            <button id="deleteLicenseBtn" class="dangerButton" type="button">Delete</button>
+                            <button id="newLicenseBtn" type="button">Tạo mới</button>
                         </div>
-                    </form>
-                </section>
-            </div>
+                        <form id="licenseForm" class="formGrid">
+                            <label class="wide">
+                                <span>License key</span>
+                                <div class="inlineInput">
+                                    <input id="licenseKey" type="text" autocomplete="off" required>
+                                    <button id="generateKeyBtn" type="button">Sinh key</button>
+                                </div>
+                            </label>
+                            <label>
+                                <span>Sản phẩm</span>
+                                <select id="productId">
+                                    <option value="ani-deepth">AniDeepth</option>
+                                    <option value="ani-layout">Ani Layout</option>
+                                    <option value="ani-anim">Ani Anim</option>
+                                    <option value="ani-voice-check">Ani Voice Check</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Trạng thái</span>
+                                <select id="licenseStatus">
+                                    <option value="available">Chưa kích hoạt</option>
+                                    <option value="active">Đang dùng</option>
+                                    <option value="blocked">Đã khóa</option>
+                                    <option value="expired">Hết hạn</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Gói</span>
+                                <input id="licensePlan" type="text" value="creator" autocomplete="off">
+                            </label>
+                            <label>
+                                <span>Số ngày</span>
+                                <input id="durationDays" type="number" min="0" max="3650" value="365">
+                            </label>
+                            <label>
+                                <span>Số máy</span>
+                                <input id="maxDevices" type="number" min="1" max="20" value="1">
+                            </label>
+                            <label>
+                                <span>Số key</span>
+                                <input id="licenseQuantity" type="number" min="1" max="50" value="1">
+                            </label>
+                            <label>
+                                <span>Email khách</span>
+                                <input id="licenseEmail" type="email" autocomplete="off" placeholder="Không bắt buộc">
+                            </label>
+                            <label>
+                                <span>Owner UID</span>
+                                <input id="ownerUid" type="text" autocomplete="off" placeholder="Chỉ dùng khi gắn tay">
+                            </label>
+                            <label class="wide">
+                                <span>Ghi chú</span>
+                                <textarea id="licenseNote" rows="3" placeholder="Tên khách, mã giao dịch, ghi chú thanh toán"></textarea>
+                            </label>
+                            <label class="wide">
+                                <span>Key vừa tạo</span>
+                                <textarea id="generatedLicenses" rows="4" readonly placeholder="License mới sẽ hiện ở đây"></textarea>
+                            </label>
+                            <div class="buttonRow wide">
+                                <button class="primaryButton" type="submit">Lưu / tạo license</button>
+                                <button id="copyLicensesBtn" type="button">Copy key mới</button>
+                                <button id="resetDevicesBtn" type="button">Reset máy</button>
+                                <button id="deleteLicenseBtn" class="dangerButton" type="button">Xóa</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
 
-            <div class="panelStack">
-                <section class="panel codeList">
-                    <div class="panelHeader">
-                        <h2>Redeem Code List</h2>
-                        <input id="codeSearchInput" type="search" placeholder="Search code or product">
-                    </div>
-                    <div class="tableWrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Product</th>
-                                    <th>Status</th>
-                                    <th>Plan</th>
-                                    <th>Days</th>
-                                    <th>Redeemed By</th>
-                                </tr>
-                            </thead>
-                            <tbody id="codeRows">
-                                <tr><td colspan="6" class="empty">No redeem codes.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section class="panel licenseList">
-                    <div class="panelHeader">
-                        <h2>Licenses</h2>
-                        <input id="searchInput" type="search" placeholder="Search email or key">
-                    </div>
-                    <div class="tableWrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Key</th>
-                                    <th>Email</th>
-                                    <th>Status</th>
-                                    <th>Devices</th>
-                                    <th>Expires</th>
-                                </tr>
-                            </thead>
-                            <tbody id="licenseRows">
-                                <tr><td colspan="5" class="empty">No license data.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                <div class="panelStack">
+                    <section class="panel licenseList">
+                        <div class="panelHeader">
+                            <div>
+                                <span class="panelKicker">Quản lý</span>
+                                <h2>Danh sách license</h2>
+                            </div>
+                            <input id="searchInput" type="search" placeholder="Tìm key, email, sản phẩm">
+                        </div>
+                        <div class="tableWrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Key</th>
+                                        <th>Sản phẩm</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày</th>
+                                        <th>Thiết bị</th>
+                                        <th>Chủ sở hữu</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="licenseRows">
+                                    <tr><td colspan="6" class="empty">Chưa có license.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
             </div>
         </section>
 
-        <p id="statusText" class="statusText">Ready.</p>
+        <p id="statusText" class="statusText">Sẵn sàng.</p>
     </main>
 
     <script type="module" src="./app.js"></script>
