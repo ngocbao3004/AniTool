@@ -746,7 +746,8 @@ textarea:disabled,
     gap: 8px;
 }
 
-.tableCopyKey {
+.tableCopyKey,
+.tableCopyText {
     display: inline;
     min-height: 0;
     max-width: 100%;
@@ -762,7 +763,9 @@ textarea:disabled,
 }
 
 .tableCopyKey:hover,
-.tableCopyKey:focus-visible {
+.tableCopyKey:focus-visible,
+.tableCopyText:hover,
+.tableCopyText:focus-visible {
     background: transparent;
     color: var(--accent);
     outline: none;
@@ -1155,7 +1158,8 @@ tbody tr.isSelected td {
         text-align: center;
     }
 
-    .tableCopyKey {
+    .tableCopyKey,
+    .tableCopyText {
         display: block;
         width: 100%;
         color: var(--accent);

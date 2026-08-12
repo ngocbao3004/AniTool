@@ -981,6 +981,9 @@ function renderLicenses() {
         const status = getEffectiveStatus(license);
         const selected = selectedLicenseIds.has(license.id) || license.id === selectedLicenseId ? " class=\"isSelected\"" : "";
         const email = license.email || "-";
+        const emailCell = license.email
+            ? `<button class="tableCopyText" type="button" data-copy-license-email="${escapeHtml(license.email)}">${escapeHtml(email)}</button>`
+            : escapeHtml(email);
         const contactInfo = license.contactInfo || "-";
         return `
             <tr data-license-id="${escapeHtml(license.id)}"${selected}>
@@ -990,7 +993,7 @@ function renderLicenses() {
                 <td data-label="Trạng thái">${renderStatusSelect(license, status)}</td>
                 <td data-label="Ngày">${renderDurationControl(license)}</td>
                 <td data-label="Máy">${escapeHtml(getDeviceCount(license))} / ${escapeHtml(license.maxDevices || 1)}</td>
-                <td data-label="Gmail" title="${escapeHtml(email)}">${escapeHtml(email)}</td>
+                <td data-label="Gmail" title="${escapeHtml(email)}">${emailCell}</td>
                 <td data-label="Liên hệ" title="${escapeHtml(contactInfo)}">${escapeHtml(contactInfo)}</td>
             </tr>
         `;
@@ -1148,19 +1151,21 @@ els.licenseRows.addEventListener("click", async (event) => {
         return;
     }
 
-    const copyTarget = event.target.closest("[data-copy-license-key]");
+    const copyTarget = event.target.closest("[data-copy-license-key], [data-copy-license-email]");
     const row = event.target.closest("[data-license-id]");
     const license = row ? licenses.find((item) => item.id === row.getAttribute("data-license-id")) : null;
 
     if (copyTarget) {
         const key = copyTarget.getAttribute("data-copy-license-key");
+        const email = copyTarget.getAttribute("data-copy-license-email");
+        const value = key || email || "";
         if (license) {
             selectedLicenseId = license.id;
             renderLicenses();
         }
         try {
-            await copyText(key);
-            setStatus("Đã copy license key.");
+            await copyText(value);
+            setStatus(key ? "Đã copy license key." : "Đã copy Gmail.");
         } catch (error) {
             setStatus("Không copy tự động được. Hãy copy thủ công.", true);
         }
