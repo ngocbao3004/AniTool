@@ -482,8 +482,11 @@ h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.2; letter-spacing: 0; }
   font-size: 12px;
 }
 .licenseStatus i { font-size: 7px; }
-.status-pending { color: color-mix(in srgb, var(--amber) 88%, var(--text)); background: color-mix(in srgb, var(--amber) 12%, transparent); }
+.status-pending,
+.status-paused { color: color-mix(in srgb, var(--amber) 88%, var(--text)); background: color-mix(in srgb, var(--amber) 12%, transparent); }
 .status-disabled,
+.status-blocked,
+.status-voided,
 .status-expired { color: color-mix(in srgb, var(--coral) 88%, var(--text)); background: color-mix(in srgb, var(--coral) 12%, transparent); }
 .emptyAccount {
   display: grid;

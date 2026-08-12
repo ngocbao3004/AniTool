@@ -128,7 +128,10 @@ const translations = {
     "license.status.active": "Active",
     "license.status.pending": "Pending",
     "license.status.disabled": "Disabled",
-    "license.status.expired": "Expired"
+    "license.status.expired": "Expired",
+    "license.status.paused": "Paused",
+    "license.status.blocked": "Blocked",
+    "license.status.voided": "Voided"
   },
   vi: {
     "nav.products": "S\u1ea3n ph\u1ea9m",
@@ -226,7 +229,10 @@ const translations = {
     "license.status.active": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
     "license.status.pending": "\u0110ang ch\u1edd",
     "license.status.disabled": "\u0110\u00e3 t\u1eaft",
-    "license.status.expired": "\u0110\u00e3 h\u1ebft h\u1ea1n"
+    "license.status.expired": "\u0110\u00e3 h\u1ebft h\u1ea1n",
+    "license.status.paused": "B\u1ea3o l\u01b0u",
+    "license.status.blocked": "\u0110\u00e3 kh\u00f3a",
+    "license.status.voided": "\u0110\u00e3 h\u1ee7y"
   }
 };
 
@@ -423,6 +429,9 @@ function formatDateLabel(date) {
 }
 
 function getDaysLeftValue(license) {
+  if (String(license.status || "").toLowerCase() === "paused" && Number.isFinite(Number(license.pausedRemainingDays))) {
+    return Number(license.pausedRemainingDays);
+  }
   const end = getLicenseEndDate(license);
   if (!end) return t("account.neverExpires");
   const days = Math.ceil((end.getTime() - Date.now()) / 86400000);
@@ -457,9 +466,11 @@ function getLegacyDaysLeftValue(expiresAt) {
 }
 
 function getLicenseStateClass(license) {
+  const status = String(license.status || "active").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  if (["paused", "blocked", "voided"].includes(status)) return status;
   const days = license.expiresAt ? getLegacyDaysLeftValue(license.expiresAt) : getDaysLeftValue(license);
   if (typeof days === "number" && days < 0) return "expired";
-  return String(license.status || "active").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  return status;
 }
 
 function updateLicenseSummary(count, stateKey) {

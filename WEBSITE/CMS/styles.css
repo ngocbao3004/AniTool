@@ -434,6 +434,40 @@ code {
     max-width: none;
 }
 
+.bulkTools {
+    display: grid;
+    grid-template-columns: auto auto minmax(74px, 90px) auto auto auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.selectVisible {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-weight: 760;
+}
+
+.selectVisible input,
+.rowSelect {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+}
+
+.selectionCount {
+    color: var(--muted-2);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.bulkDayInput {
+    max-width: 90px;
+    text-align: center;
+}
+
 .formGrid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -692,7 +726,7 @@ textarea:focus {
 
 table {
     width: 100%;
-    min-width: 880px;
+    min-width: 1040px;
     border-collapse: collapse;
 }
 
@@ -714,6 +748,11 @@ th {
     font-size: 11px;
     font-weight: 820;
     text-transform: uppercase;
+}
+
+.selectColumn {
+    width: 42px;
+    text-align: center;
 }
 
 .sortHeader {
@@ -769,6 +808,58 @@ tbody tr.isSelected td {
     font-weight: 760;
 }
 
+.statusControl {
+    position: relative;
+    display: grid;
+    min-width: 128px;
+}
+
+.statusControl i {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    pointer-events: none;
+    color: var(--muted-2);
+    font-size: 10px;
+    transform: translateY(-50%);
+}
+
+.statusSelect {
+    min-height: 32px;
+    appearance: none;
+    border-radius: 8px;
+    padding: 6px 26px 6px 9px;
+    font-size: 12px;
+    font-weight: 760;
+}
+
+.statusHint {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted-2);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.durationControl {
+    display: grid;
+    grid-template-columns: 28px minmax(58px, 76px) 28px;
+    gap: 4px;
+    align-items: center;
+}
+
+.durationButton {
+    min-height: 28px;
+    border-radius: 7px;
+    padding: 0;
+}
+
+.durationInput {
+    min-height: 28px;
+    padding: 4px 6px;
+    text-align: center;
+}
+
 .statusPill.isActive {
     background: color-mix(in srgb, var(--ok) 16%, transparent);
     color: color-mix(in srgb, var(--ok) 82%, var(--text));
@@ -781,7 +872,26 @@ tbody tr.isSelected td {
 
 .statusPill.isBlocked,
 .statusPill.isExpired,
+.statusPill.isPaused,
 .statusPill.isVoided {
+    background: color-mix(in srgb, var(--danger) 16%, transparent);
+    color: color-mix(in srgb, var(--danger) 82%, var(--text));
+}
+
+.statusSelect.isActive {
+    background: color-mix(in srgb, var(--ok) 16%, transparent);
+    color: color-mix(in srgb, var(--ok) 88%, var(--text));
+}
+
+.statusSelect.isAvailable {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: color-mix(in srgb, var(--accent) 88%, var(--text));
+}
+
+.statusSelect.isBlocked,
+.statusSelect.isExpired,
+.statusSelect.isPaused,
+.statusSelect.isVoided {
     background: color-mix(in srgb, var(--danger) 16%, transparent);
     color: color-mix(in srgb, var(--danger) 82%, var(--text));
 }
@@ -844,6 +954,15 @@ tbody tr.isSelected td {
         grid-template-columns: 1fr;
     }
 
+    .bulkTools {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .selectVisible,
+    .selectionCount {
+        grid-column: 1 / -1;
+    }
+
     .smartSelectMenu,
     .smartSelectCompact .smartSelectMenu {
         width: 100%;
@@ -896,7 +1015,7 @@ tbody tr.isSelected td {
 
     td {
         display: grid;
-        grid-template-columns: minmax(74px, 0.36fr) minmax(0, 1fr);
+        grid-template-columns: minmax(82px, 0.36fr) minmax(0, 1fr);
         gap: 12px;
         align-items: center;
         min-height: 34px;
@@ -912,14 +1031,23 @@ tbody tr.isSelected td {
         text-transform: uppercase;
     }
 
-    td:first-child {
+    td:first-child,
+    td:nth-child(2) {
         grid-template-columns: 1fr;
         min-height: 0;
+    }
+
+    td:first-child {
         padding-top: 0;
+        padding-bottom: 4px;
+    }
+
+    td:nth-child(2) {
         padding-bottom: 10px;
     }
 
     td:first-child::before,
+    td:nth-child(2)::before,
     td.empty::before {
         display: none;
     }
@@ -946,5 +1074,10 @@ tbody tr.isSelected td {
 
     .statusPill {
         justify-self: start;
+    }
+
+    .statusControl,
+    .durationControl {
+        width: min(100%, 220px);
     }
 }

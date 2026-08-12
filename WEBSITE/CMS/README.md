@@ -52,8 +52,12 @@ Status values:
 
 - `available`: created by admin, not activated yet.
 - `active`: activated by a customer account.
+- `paused`: preserved by admin; remaining days are held in `pausedRemainingDays`.
 - `blocked`: blocked by admin.
-- `expired`: expired or disabled manually.
+- `expired`: expired by duration or marked manually.
+- `voided`: soft-deleted/cancelled by admin. The document stays for sales history.
+
+Important admin edits are also written to `licenseEvents` so license changes can be audited later.
 
 ## Deploy
 

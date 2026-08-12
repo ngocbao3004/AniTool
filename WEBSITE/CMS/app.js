@@ -8,13 +8,15 @@ import {
     signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import {
+    addDoc,
     collection,
     doc,
     getDoc,
     getFirestore,
     onSnapshot,
     serverTimestamp,
-    setDoc
+    setDoc,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -69,6 +71,12 @@ const els = {
     statusSelectMenu: document.getElementById("statusSelectMenu"),
     statusOptionList: document.getElementById("statusOptionList"),
     licenseRows: document.getElementById("licenseRows"),
+    selectAllVisible: document.getElementById("selectAllVisible"),
+    selectionCount: document.getElementById("selectionCount"),
+    bulkDayAmount: document.getElementById("bulkDayAmount"),
+    bulkSubtractDays: document.getElementById("bulkSubtractDays"),
+    bulkAddDays: document.getElementById("bulkAddDays"),
+    clearSelectionBtn: document.getElementById("clearSelectionBtn"),
     createTabBtn: document.getElementById("createTabBtn"),
     listTabBtn: document.getElementById("listTabBtn"),
     createTabPanel: document.getElementById("createTabPanel"),
@@ -78,12 +86,17 @@ const els = {
 let licenses = [];
 let lastGeneratedKeys = [];
 let selectedLicenseId = "";
+let selectedLicenseIds = new Set();
+let visibleLicenseIds = [];
 let unsubscribeLicenses = null;
 let activeDropdown = null;
 let sortState = {
     key: "createdAt",
     direction: "desc"
 };
+
+const MIN_DURATION_DAYS = 1;
+const MAX_DURATION_DAYS = 36500;
 
 const products = {
     "ani-deepth": {
@@ -115,9 +128,20 @@ const products = {
 const statusLabels = {
     available: "Chưa kích hoạt",
     active: "Đang dùng",
+    paused: "Bảo lưu",
     blocked: "Đã khóa",
-    expired: "Hết hạn"
+    expired: "Hết hạn",
+    voided: "Đã hủy"
 };
+
+const editableStatusOptions = [
+    { value: "available", label: "Chưa kích hoạt" },
+    { value: "active", label: "Đang dùng" },
+    { value: "paused", label: "Bảo lưu" },
+    { value: "expired", label: "Hết hạn" },
+    { value: "blocked", label: "Ban / khóa" },
+    { value: "voided", label: "Hủy key" }
+];
 
 const softwareFilterOptions = [
     { value: "all", label: "Tất cả phần mềm" },
@@ -133,7 +157,9 @@ const statusFilterOptions = [
     { value: "active", label: "Đang dùng" },
     { value: "expiring", label: "Sắp hết hạn" },
     { value: "expired", label: "Đã quá hạn" },
-    { value: "blocked", label: "Đã khóa" }
+    { value: "paused", label: "Bảo lưu" },
+    { value: "blocked", label: "Đã khóa" },
+    { value: "voided", label: "Đã hủy" }
 ];
 
 function getStoredTheme() {
@@ -340,8 +366,14 @@ function getEffectiveStatus(license) {
     const status = String(license.status || "available").toLowerCase();
     const daysRemaining = getDaysRemaining(license);
 
+    if (status === "voided") {
+        return "voided";
+    }
     if (status === "blocked") {
         return "blocked";
+    }
+    if (status === "paused") {
+        return "paused";
     }
     if (daysRemaining !== null && daysRemaining <= 0) {
         return "expired";
@@ -359,6 +391,12 @@ function getStatusText(license) {
 
     if (effectiveStatus === "active" && daysRemaining !== null) {
         return `Đang dùng · còn ${daysRemaining} ngày`;
+    }
+    if (effectiveStatus === "paused") {
+        const pausedDays = Number.isFinite(Number(license.pausedRemainingDays))
+            ? Number(license.pausedRemainingDays)
+            : daysRemaining;
+        return Number.isFinite(pausedDays) ? `Bảo lưu · còn ${pausedDays} ngày` : "Bảo lưu";
     }
 
     return getStatusLabel(effectiveStatus);
@@ -384,6 +422,24 @@ function parseRequiredInteger(input, label, min, max) {
     }
 
     return parsed;
+}
+
+function clampDurationDays(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+        return MIN_DURATION_DAYS;
+    }
+
+    return Math.max(MIN_DURATION_DAYS, Math.min(MAX_DURATION_DAYS, Math.round(parsed)));
+}
+
+function getElapsedDaysSinceActivation(license) {
+    const activatedAt = getTimestampDate(license.activatedAt);
+    if (!activatedAt) {
+        return 0;
+    }
+
+    return Math.max(0, Math.ceil((Date.now() - activatedAt.getTime()) / (24 * 60 * 60 * 1000)));
 }
 
 function getDeviceCount(license) {
@@ -470,7 +526,7 @@ function getFormPayload() {
             productId: els.productId.value || "ani-deepth",
             status: "available",
             plan: "creator",
-            durationDays: parseRequiredInteger(els.durationDays, "Số ngày", 1, 3650),
+            durationDays: parseRequiredInteger(els.durationDays, "Số ngày", MIN_DURATION_DAYS, MAX_DURATION_DAYS),
             maxDevices: parseRequiredInteger(els.maxDevices, "Số máy", 1, 20),
             contactInfo,
             note: "",
@@ -497,6 +553,111 @@ async function saveNewLicenseDocument(id, data) {
         deviceCount: 0,
         activatedAt: null
     });
+}
+
+async function writeLicenseEvent(license, action, detail = {}) {
+    await addDoc(collection(db, "licenseEvents"), {
+        licenseId: license.id,
+        licenseKey: license.licenseKey || license.id,
+        productId: license.productId || "",
+        action,
+        detail,
+        actorUid: auth.currentUser ? auth.currentUser.uid : "",
+        actorEmail: auth.currentUser ? auth.currentUser.email || "" : "",
+        createdAt: serverTimestamp()
+    });
+}
+
+async function updateLicenseFields(license, fields, action, detail = {}) {
+    await updateDoc(doc(db, "licenses", license.id), {
+        ...fields,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth.currentUser ? auth.currentUser.uid : "",
+        updatedByEmail: auth.currentUser ? auth.currentUser.email || "" : ""
+    });
+    await writeLicenseEvent(license, action, detail);
+}
+
+function buildStatusFields(license, nextStatus) {
+    const fields = { status: nextStatus };
+    const previousStatus = String(license.status || "available").toLowerCase();
+
+    if (nextStatus === "blocked") {
+        fields.blockedAt = serverTimestamp();
+        fields.blockedBy = auth.currentUser ? auth.currentUser.uid : "";
+    }
+    if (nextStatus === "voided") {
+        fields.voidedAt = serverTimestamp();
+        fields.voidedBy = auth.currentUser ? auth.currentUser.uid : "";
+    }
+    if (nextStatus === "paused") {
+        const remaining = getDaysRemaining(license);
+        fields.pausedAt = serverTimestamp();
+        fields.pausedBy = auth.currentUser ? auth.currentUser.uid : "";
+        fields.pausedRemainingDays = Number.isFinite(remaining)
+            ? Math.max(0, remaining)
+            : clampDurationDays(license.durationDays || 1);
+    }
+    if (previousStatus === "paused" && nextStatus === "active") {
+        const pausedRemainingDays = Number(license.pausedRemainingDays);
+        if (Number.isFinite(pausedRemainingDays) && license.activatedAt) {
+            fields.durationDays = clampDurationDays(getElapsedDaysSinceActivation(license) + pausedRemainingDays);
+        }
+        fields.resumedAt = serverTimestamp();
+    }
+
+    return fields;
+}
+
+async function updateLicenseStatus(license, nextStatus) {
+    const normalizedStatus = String(nextStatus || "").toLowerCase();
+    const currentStatus = String(license.status || "available").toLowerCase();
+
+    if (!editableStatusOptions.some((option) => option.value === normalizedStatus) || normalizedStatus === currentStatus) {
+        return;
+    }
+
+    if (normalizedStatus === "voided" && !window.confirm("Hủy key này? Document vẫn được giữ để tra lịch sử, nhưng key sẽ không dùng được nữa.")) {
+        renderLicenses();
+        return;
+    }
+    if (normalizedStatus === "blocked" && !window.confirm("Ban/khóa key này? Người dùng sẽ không thể dùng license này.")) {
+        renderLicenses();
+        return;
+    }
+
+    await updateLicenseFields(
+        license,
+        buildStatusFields(license, normalizedStatus),
+        "status-change",
+        { from: currentStatus, to: normalizedStatus }
+    );
+    setStatus(`Đã đổi trạng thái ${license.licenseKey || license.id}.`);
+}
+
+async function setLicenseDuration(license, nextDurationDays, action = "duration-set") {
+    const previousDays = clampDurationDays(license.durationDays || 1);
+    const nextDays = clampDurationDays(nextDurationDays);
+
+    if (nextDays === previousDays) {
+        return;
+    }
+    const fields = { durationDays: nextDays };
+    if (String(license.status || "").toLowerCase() === "paused" && Number.isFinite(Number(license.pausedRemainingDays))) {
+        fields.pausedRemainingDays = Math.max(0, Number(license.pausedRemainingDays) + (nextDays - previousDays));
+    }
+
+    await updateLicenseFields(
+        license,
+        fields,
+        action,
+        { from: previousDays, to: nextDays, delta: nextDays - previousDays }
+    );
+}
+
+async function applyLicenseDayDelta(license, delta) {
+    const previousDays = clampDurationDays(license.durationDays || 1);
+    await setLicenseDuration(license, previousDays + delta, "duration-delta");
 }
 
 function getSortValue(license, key) {
@@ -561,9 +722,89 @@ function updateSortHeaders() {
     });
 }
 
+function getEditableStatusOptions(license) {
+    const hasOwner = Boolean(license.ownerUid || license.activatedAt);
+
+    return editableStatusOptions.filter((option) => {
+        if (option.value === "active") {
+            return hasOwner;
+        }
+        if (option.value === "paused") {
+            return hasOwner;
+        }
+        if (option.value === "available") {
+            return !hasOwner || String(license.status || "").toLowerCase() === "available";
+        }
+        return true;
+    });
+}
+
+function renderStatusSelect(license, effectiveStatus) {
+    const rawStatus = String(license.status || "available").toLowerCase();
+    const currentStatus = rawStatus === "active" && effectiveStatus === "expired" ? "active" : rawStatus;
+
+    return `
+        <div class="statusControl">
+            <select class="statusSelect ${escapeHtml(getStatusClass(effectiveStatus))}" data-license-status="${escapeHtml(license.id)}" aria-label="Đổi trạng thái license">
+                ${getEditableStatusOptions(license).map((option) => `
+                    <option value="${escapeHtml(option.value)}"${option.value === currentStatus ? " selected" : ""}>${escapeHtml(option.label)}</option>
+                `).join("")}
+            </select>
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </div>
+        <span class="statusHint">${escapeHtml(getStatusText(license))}</span>
+    `;
+}
+
+function renderDurationControl(license) {
+    return `
+        <div class="durationControl">
+            <button class="durationButton" type="button" data-license-day-delta="-1" data-license-id="${escapeHtml(license.id)}" title="Trừ 1 ngày">-</button>
+            <input class="durationInput" type="number" min="${MIN_DURATION_DAYS}" max="${MAX_DURATION_DAYS}" value="${escapeHtml(clampDurationDays(license.durationDays || 1))}" data-license-duration="${escapeHtml(license.id)}" aria-label="Số ngày license">
+            <button class="durationButton" type="button" data-license-day-delta="1" data-license-id="${escapeHtml(license.id)}" title="Cộng 1 ngày">+</button>
+        </div>
+    `;
+}
+
+function updateSelectionUI() {
+    const selectedCount = selectedLicenseIds.size;
+    const visibleSelectedCount = visibleLicenseIds.filter((id) => selectedLicenseIds.has(id)).length;
+
+    els.selectionCount.textContent = `${selectedCount} đã chọn`;
+    els.selectAllVisible.checked = visibleLicenseIds.length > 0 && visibleSelectedCount === visibleLicenseIds.length;
+    els.selectAllVisible.indeterminate = visibleSelectedCount > 0 && visibleSelectedCount < visibleLicenseIds.length;
+    const hasSelection = selectedCount > 0;
+    els.bulkAddDays.disabled = !hasSelection;
+    els.bulkSubtractDays.disabled = !hasSelection;
+    els.clearSelectionBtn.disabled = !hasSelection;
+}
+
+function getSelectedLicenses() {
+    return licenses.filter((license) => selectedLicenseIds.has(license.id));
+}
+
+async function applyBulkDayDelta(direction) {
+    const amount = parseRequiredInteger(els.bulkDayAmount, "Số ngày hàng loạt", 1, MAX_DURATION_DAYS);
+    const delta = direction * amount;
+    const targets = getSelectedLicenses();
+
+    if (targets.length === 0) {
+        setStatus("Chưa chọn license nào để chỉnh ngày.", true);
+        return;
+    }
+    if (targets.length > 10 && !window.confirm(`Áp dụng ${delta > 0 ? "cộng" : "trừ"} ${Math.abs(delta)} ngày cho ${targets.length} license?`)) {
+        return;
+    }
+
+    setStatus(`Đang cập nhật ${targets.length} license...`);
+    await Promise.all(targets.map((license) => applyLicenseDayDelta(license, delta)));
+    setStatus(`Đã cập nhật ${targets.length} license.`);
+}
+
 function renderLicenses() {
     updateMetrics();
     updateSortHeaders();
+    selectedLicenseIds = new Set([...selectedLicenseIds].filter((id) => licenses.some((license) => license.id === id)));
     const search = String(els.searchInput.value || "").trim().toLowerCase();
     const softwareFilter = els.softwareFilter.value || "all";
     const statusFilter = els.statusFilter.value || "all";
@@ -591,24 +832,26 @@ function renderLicenses() {
         return matchesSoftware && matchesStatus && (!search || haystack.indexOf(search) !== -1);
     });
     const sortedLicenses = sortLicenses(filtered);
+    visibleLicenseIds = sortedLicenses.map((license) => license.id);
+    updateSelectionUI();
 
     if (sortedLicenses.length === 0) {
-        els.licenseRows.innerHTML = '<tr><td colspan="7" class="empty">Chưa có license phù hợp.</td></tr>';
+        els.licenseRows.innerHTML = '<tr><td colspan="8" class="empty">Chưa có license phù hợp.</td></tr>';
         return;
     }
 
     els.licenseRows.innerHTML = sortedLicenses.map((license) => {
         const status = getEffectiveStatus(license);
-        const statusText = getStatusText(license);
-        const selected = license.id === selectedLicenseId ? " class=\"isSelected\"" : "";
+        const selected = selectedLicenseIds.has(license.id) || license.id === selectedLicenseId ? " class=\"isSelected\"" : "";
         const email = license.email || "-";
         const contactInfo = license.contactInfo || "-";
         return `
             <tr data-license-id="${escapeHtml(license.id)}"${selected}>
+                <td data-label="Chọn" class="selectColumn"><input class="rowSelect" type="checkbox" data-license-select="${escapeHtml(license.id)}"${selectedLicenseIds.has(license.id) ? " checked" : ""} aria-label="Chọn license"></td>
                 <td data-label="Key" title="${escapeHtml(license.id)}"><button class="tableCopyKey" type="button" data-copy-license-key="${escapeHtml(license.licenseKey || license.id)}">${escapeHtml(license.licenseKey || license.id)}</button></td>
                 <td data-label="Sản phẩm"><span class="productCell"><strong>${escapeHtml(getProductName(license.productId))}</strong><small>${escapeHtml(getProductSoftware(license.productId))}</small></span></td>
-                <td data-label="Trạng thái"><span class="statusPill ${escapeHtml(getStatusClass(status))}">${escapeHtml(statusText)}</span></td>
-                <td data-label="Ngày">${escapeHtml(license.durationDays ?? 0)}</td>
+                <td data-label="Trạng thái">${renderStatusSelect(license, status)}</td>
+                <td data-label="Ngày">${renderDurationControl(license)}</td>
                 <td data-label="Máy">${escapeHtml(getDeviceCount(license))} / ${escapeHtml(license.maxDevices || 1)}</td>
                 <td data-label="Gmail" title="${escapeHtml(email)}">${escapeHtml(email)}</td>
                 <td data-label="Liên hệ" title="${escapeHtml(contactInfo)}">${escapeHtml(contactInfo)}</td>
@@ -749,6 +992,25 @@ els.copyLicensesBtn.addEventListener("click", async () => {
 });
 
 els.licenseRows.addEventListener("click", async (event) => {
+    const dayButton = event.target.closest("[data-license-day-delta]");
+    if (dayButton) {
+        const license = licenses.find((item) => item.id === dayButton.getAttribute("data-license-id"));
+        if (!license) {
+            return;
+        }
+        try {
+            await applyLicenseDayDelta(license, Number(dayButton.getAttribute("data-license-day-delta")));
+            setStatus(`Đã cập nhật ngày cho ${license.licenseKey || license.id}.`);
+        } catch (error) {
+            setStatus(error.message, true);
+        }
+        return;
+    }
+
+    if (event.target.closest(".rowSelect, .statusSelect, .durationInput, .durationControl")) {
+        return;
+    }
+
     const copyTarget = event.target.closest("[data-copy-license-key]");
     const row = event.target.closest("[data-license-id]");
     const license = row ? licenses.find((item) => item.id === row.getAttribute("data-license-id")) : null;
@@ -775,7 +1037,94 @@ els.licenseRows.addEventListener("click", async (event) => {
     }
 });
 
+els.licenseRows.addEventListener("change", async (event) => {
+    const selectTarget = event.target.closest("[data-license-select]");
+    if (selectTarget) {
+        const id = selectTarget.getAttribute("data-license-select");
+        if (selectTarget.checked) {
+            selectedLicenseIds.add(id);
+        } else {
+            selectedLicenseIds.delete(id);
+        }
+        selectedLicenseId = id;
+        renderLicenses();
+        return;
+    }
+
+    const statusTarget = event.target.closest("[data-license-status]");
+    if (statusTarget) {
+        const license = licenses.find((item) => item.id === statusTarget.getAttribute("data-license-status"));
+        if (!license) {
+            return;
+        }
+        try {
+            await updateLicenseStatus(license, statusTarget.value);
+        } catch (error) {
+            setStatus(error.message, true);
+            renderLicenses();
+        }
+        return;
+    }
+
+    const durationTarget = event.target.closest("[data-license-duration]");
+    if (durationTarget) {
+        const license = licenses.find((item) => item.id === durationTarget.getAttribute("data-license-duration"));
+        if (!license) {
+            return;
+        }
+        try {
+            await setLicenseDuration(license, durationTarget.value);
+            setStatus(`Đã cập nhật ngày cho ${license.licenseKey || license.id}.`);
+        } catch (error) {
+            setStatus(error.message, true);
+            renderLicenses();
+        }
+    }
+});
+
+els.licenseRows.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && event.target.closest("[data-license-duration]")) {
+        event.target.blur();
+    }
+});
+
 els.searchInput.addEventListener("input", renderLicenses);
+
+els.selectAllVisible.addEventListener("change", () => {
+    visibleLicenseIds.forEach((id) => {
+        if (els.selectAllVisible.checked) {
+            selectedLicenseIds.add(id);
+        } else {
+            selectedLicenseIds.delete(id);
+        }
+    });
+    renderLicenses();
+});
+
+els.clearSelectionBtn.addEventListener("click", () => {
+    selectedLicenseIds.clear();
+    renderLicenses();
+});
+
+els.bulkAddDays.addEventListener("click", async () => {
+    try {
+        await applyBulkDayDelta(1);
+    } catch (error) {
+        setStatus(error.message, true);
+    }
+});
+
+els.bulkSubtractDays.addEventListener("click", async () => {
+    try {
+        await applyBulkDayDelta(-1);
+    } catch (error) {
+        setStatus(error.message, true);
+    }
+});
+
+els.bulkDayAmount.addEventListener("input", () => {
+    els.bulkDayAmount.value = String(Math.max(1, Math.min(MAX_DURATION_DAYS, Number(els.bulkDayAmount.value || 1))));
+});
 
 els.productSelectBtn.addEventListener("click", () => {
     if (els.productSelectMenu.hidden) {

@@ -118,7 +118,7 @@
                         </label>
                         <label>
                             <span>Số ngày</span>
-                            <input id="durationDays" type="number" min="1" max="3650" value="365" required>
+                            <input id="durationDays" type="number" min="1" max="36500" value="365" required>
                         </label>
                         <label>
                             <span>Số máy</span>
@@ -175,10 +175,22 @@
                             </div>
                         </div>
                     </div>
+                    <div class="bulkTools">
+                        <label class="selectVisible">
+                            <input id="selectAllVisible" type="checkbox">
+                            <span>Chọn trang này</span>
+                        </label>
+                        <span id="selectionCount" class="selectionCount">0 đã chọn</span>
+                        <input id="bulkDayAmount" class="bulkDayInput" type="number" min="1" max="36500" value="1" aria-label="Số ngày cần cộng hoặc trừ">
+                        <button id="bulkSubtractDays" type="button">Trừ ngày</button>
+                        <button id="bulkAddDays" class="primaryButton" type="button">Cộng ngày</button>
+                        <button id="clearSelectionBtn" type="button">Bỏ chọn</button>
+                    </div>
                     <div class="tableWrap">
                         <table>
                             <thead>
                                 <tr>
+                                    <th class="selectColumn"></th>
                                     <th><button class="sortHeader" type="button" data-sort-key="key">Key <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
                                     <th><button class="sortHeader" type="button" data-sort-key="product">Sản phẩm <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
                                     <th><button class="sortHeader" type="button" data-sort-key="status">Trạng thái <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
@@ -189,7 +201,7 @@
                                 </tr>
                             </thead>
                             <tbody id="licenseRows">
-                                <tr><td colspan="7" class="empty">Chưa có license.</td></tr>
+                                <tr><td colspan="8" class="empty">Chưa có license.</td></tr>
                             </tbody>
                         </table>
                     </div>
