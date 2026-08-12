@@ -47,12 +47,15 @@ const els = {
     licenseEmail: document.getElementById("licenseEmail"),
     contactInfo: document.getElementById("contactInfo"),
     productId: document.getElementById("productId"),
+    productPicker: document.getElementById("productPicker"),
     durationDays: document.getElementById("durationDays"),
     maxDevices: document.getElementById("maxDevices"),
     copyLicensesBtn: document.getElementById("copyLicensesBtn"),
     generateKeyBtn: document.getElementById("generateKeyBtn"),
     createLicenseBtn: document.getElementById("createLicenseBtn"),
     searchInput: document.getElementById("searchInput"),
+    softwareFilter: document.getElementById("softwareFilter"),
+    statusFilter: document.getElementById("statusFilter"),
     licenseRows: document.getElementById("licenseRows"),
     createTabBtn: document.getElementById("createTabBtn"),
     listTabBtn: document.getElementById("listTabBtn"),
@@ -65,18 +68,31 @@ let lastGeneratedKeys = [];
 let selectedLicenseId = "";
 let unsubscribeLicenses = null;
 
-const productNames = {
-    "ani-deepth": "AniDeepth",
-    "ani-layout": "Ani Layout",
-    "ani-anim": "Ani Anim",
-    "ani-voice-check": "Ani Voice Check"
-};
-
-const productPrefixes = {
-    "ani-deepth": "ANI-DEEPTH",
-    "ani-layout": "ANI-LAYOUT",
-    "ani-anim": "ANI-ANIM",
-    "ani-voice-check": "ANI-VOICE"
+const products = {
+    "ani-deepth": {
+        name: "AniDeepth",
+        software: "After Effects",
+        softwareKey: "after-effects",
+        prefix: "AD"
+    },
+    "ani-layout": {
+        name: "Ani Layout",
+        software: "Illustrator",
+        softwareKey: "illustrator",
+        prefix: "AL"
+    },
+    "ani-anim": {
+        name: "Ani Anim",
+        software: "Autodesk Maya",
+        softwareKey: "maya",
+        prefix: "AA"
+    },
+    "ani-voice-check": {
+        name: "Ani Voice Check",
+        software: "Windows",
+        softwareKey: "windows",
+        prefix: "AVC"
+    }
 };
 
 const statusLabels = {
@@ -136,13 +152,84 @@ function normalizeLicenseKey(value) {
         .replace(/[^A-Z0-9-]/g, "");
 }
 
+function getProductMeta(productId) {
+    return products[productId] || {
+        name: productId || "AniTool",
+        software: "Không rõ",
+        softwareKey: "unknown",
+        prefix: "ANI"
+    };
+}
+
 function getProductName(productId) {
-    return productNames[productId] || productId || "AniTool";
+    return getProductMeta(productId).name;
+}
+
+function getProductSoftware(productId) {
+    return getProductMeta(productId).software;
 }
 
 function getStatusLabel(status) {
     const value = String(status || "available").toLowerCase();
     return statusLabels[value] || status || "Không rõ";
+}
+
+function getTimestampDate(value) {
+    if (!value) {
+        return null;
+    }
+    if (value instanceof Date) {
+        return value;
+    }
+    if (typeof value.toDate === "function") {
+        return value.toDate();
+    }
+    if (typeof value.seconds === "number") {
+        return new Date(value.seconds * 1000);
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getDaysRemaining(license) {
+    const activatedAt = getTimestampDate(license.activatedAt);
+    const durationDays = Number(license.durationDays);
+
+    if (!activatedAt || !Number.isFinite(durationDays) || durationDays <= 0) {
+        return null;
+    }
+
+    const expiresAt = activatedAt.getTime() + durationDays * 24 * 60 * 60 * 1000;
+    return Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60 * 1000));
+}
+
+function getEffectiveStatus(license) {
+    const status = String(license.status || "available").toLowerCase();
+    const daysRemaining = getDaysRemaining(license);
+
+    if (status === "blocked") {
+        return "blocked";
+    }
+    if (daysRemaining !== null && daysRemaining <= 0) {
+        return "expired";
+    }
+    if (status === "active" || license.ownerUid || license.activatedAt) {
+        return "active";
+    }
+
+    return status;
+}
+
+function getStatusText(license) {
+    const effectiveStatus = getEffectiveStatus(license);
+    const daysRemaining = getDaysRemaining(license);
+
+    if (effectiveStatus === "active" && daysRemaining !== null) {
+        return `Đang dùng · còn ${daysRemaining} ngày`;
+    }
+
+    return getStatusLabel(effectiveStatus);
 }
 
 function getStatusClass(status) {
@@ -179,13 +266,13 @@ function getDeviceCount(license) {
 
 function updateMetrics() {
     els.licenseCount.textContent = String(licenses.length);
-    els.availableCount.textContent = String(licenses.filter((license) => (license.status || "available") === "available").length);
-    els.activeCount.textContent = String(licenses.filter((license) => (license.status || "available") === "active").length);
+    els.availableCount.textContent = String(licenses.filter((license) => getEffectiveStatus(license) === "available").length);
+    els.activeCount.textContent = String(licenses.filter((license) => getEffectiveStatus(license) === "active").length);
 }
 
 function generateLicenseKey(productId = els.productId.value) {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const prefix = productPrefixes[productId] || "ANI-LICENSE";
+    const prefix = getProductMeta(productId).prefix;
     const parts = [prefix];
 
     for (let p = 0; p < 2; p++) {
@@ -199,13 +286,39 @@ function generateLicenseKey(productId = els.productId.value) {
     return parts.join("-");
 }
 
+function updateProductPicker() {
+    const currentProductId = els.productId.value || "ani-deepth";
+
+    els.productPicker.querySelectorAll("[data-product-id]").forEach((choice) => {
+        const isActive = choice.getAttribute("data-product-id") === currentProductId;
+        choice.classList.toggle("isActive", isActive);
+        choice.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+}
+
+function setProduct(productId, shouldGenerateKey = false) {
+    if (!products[productId]) {
+        return;
+    }
+
+    els.productId.value = productId;
+    updateProductPicker();
+
+    if (shouldGenerateKey) {
+        selectedLicenseId = "";
+        lastGeneratedKeys = [];
+        els.licenseKey.value = generateLicenseKey(productId);
+        renderLicenses();
+    }
+}
+
 function clearForm() {
     selectedLicenseId = "";
     lastGeneratedKeys = [];
-    els.licenseKey.value = "";
     els.licenseEmail.value = "";
     els.contactInfo.value = "";
-    els.productId.value = "ani-deepth";
+    setProduct("ani-deepth");
+    els.licenseKey.value = generateLicenseKey("ani-deepth");
     els.durationDays.value = "365";
     els.maxDevices.value = "1";
     renderLicenses();
@@ -266,7 +379,16 @@ async function saveNewLicenseDocument(id, data) {
 function renderLicenses() {
     updateMetrics();
     const search = String(els.searchInput.value || "").trim().toLowerCase();
+    const softwareFilter = els.softwareFilter.value || "all";
+    const statusFilter = els.statusFilter.value || "all";
     const filtered = licenses.filter((license) => {
+        const meta = getProductMeta(license.productId);
+        const effectiveStatus = getEffectiveStatus(license);
+        const daysRemaining = getDaysRemaining(license);
+        const matchesSoftware = softwareFilter === "all" || meta.softwareKey === softwareFilter;
+        const matchesStatus = statusFilter === "all"
+            || effectiveStatus === statusFilter
+            || (statusFilter === "expiring" && effectiveStatus === "active" && daysRemaining !== null && daysRemaining <= 14);
         const haystack = [
             license.id,
             license.licenseKey || "",
@@ -274,10 +396,13 @@ function renderLicenses() {
             license.contactInfo || "",
             license.ownerUid || "",
             license.productId || "",
-            getProductName(license.productId),
+            meta.name,
+            meta.software,
+            getStatusText(license),
+            effectiveStatus,
             license.status || ""
         ].join(" ").toLowerCase();
-        return !search || haystack.indexOf(search) !== -1;
+        return matchesSoftware && matchesStatus && (!search || haystack.indexOf(search) !== -1);
     });
 
     if (filtered.length === 0) {
@@ -286,15 +411,16 @@ function renderLicenses() {
     }
 
     els.licenseRows.innerHTML = filtered.map((license) => {
-        const status = license.status || "available";
+        const status = getEffectiveStatus(license);
+        const statusText = getStatusText(license);
         const selected = license.id === selectedLicenseId ? " class=\"isSelected\"" : "";
         const email = license.email || "-";
         const contactInfo = license.contactInfo || "-";
         return `
             <tr data-license-id="${escapeHtml(license.id)}"${selected}>
                 <td data-label="Key" title="${escapeHtml(license.id)}"><button class="tableCopyKey" type="button" data-copy-license-key="${escapeHtml(license.licenseKey || license.id)}">${escapeHtml(license.licenseKey || license.id)}</button></td>
-                <td data-label="Sản phẩm">${escapeHtml(getProductName(license.productId))}</td>
-                <td data-label="Trạng thái"><span class="statusPill ${escapeHtml(getStatusClass(status))}">${escapeHtml(getStatusLabel(status))}</span></td>
+                <td data-label="Sản phẩm"><span class="productCell"><strong>${escapeHtml(getProductName(license.productId))}</strong><small>${escapeHtml(getProductSoftware(license.productId))}</small></span></td>
+                <td data-label="Trạng thái"><span class="statusPill ${escapeHtml(getStatusClass(status))}">${escapeHtml(statusText)}</span></td>
                 <td data-label="Ngày">${escapeHtml(license.durationDays ?? 0)}</td>
                 <td data-label="Máy">${escapeHtml(getDeviceCount(license))} / ${escapeHtml(license.maxDevices || 1)}</td>
                 <td data-label="Gmail" title="${escapeHtml(email)}">${escapeHtml(email)}</td>
@@ -463,6 +589,8 @@ els.licenseRows.addEventListener("click", async (event) => {
 });
 
 els.searchInput.addEventListener("input", renderLicenses);
+els.softwareFilter.addEventListener("change", renderLicenses);
+els.statusFilter.addEventListener("change", renderLicenses);
 
 els.createTabBtn.addEventListener("click", () => {
     setActiveWorkspaceTab("create");
@@ -472,11 +600,13 @@ els.listTabBtn.addEventListener("click", () => {
     setActiveWorkspaceTab("list");
 });
 
-els.productId.addEventListener("change", () => {
-    selectedLicenseId = "";
-    lastGeneratedKeys = [];
-    els.licenseKey.value = "";
-    renderLicenses();
+els.productPicker.addEventListener("click", (event) => {
+    const choice = event.target.closest("[data-product-id]");
+    if (!choice) {
+        return;
+    }
+
+    setProduct(choice.getAttribute("data-product-id"), true);
 });
 
 function showLogin() {

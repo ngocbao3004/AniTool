@@ -423,6 +423,17 @@ code {
     max-width: 270px;
 }
 
+.listTools {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(150px, auto) minmax(150px, auto);
+    gap: 8px;
+    width: min(720px, 100%);
+}
+
+.listTools input {
+    max-width: none;
+}
+
 .formGrid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -490,6 +501,53 @@ textarea:focus {
     align-items: end;
 }
 
+.productPicker {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.productChoice {
+    display: grid;
+    min-height: 58px;
+    align-content: center;
+    gap: 2px;
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+    color: var(--text);
+    text-align: left;
+}
+
+.productChoice:hover,
+.productChoice:focus-visible {
+    background: color-mix(in srgb, var(--text) 12%, transparent);
+    transform: none;
+}
+
+.productChoice.isActive {
+    background: var(--accent);
+    color: var(--accent-on);
+    box-shadow: 0 12px 26px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.productChoice strong,
+.productChoice span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.productChoice strong {
+    font-size: 13px;
+    line-height: 1.12;
+}
+
+.productChoice span {
+    opacity: 0.78;
+    font-size: 11px;
+    font-weight: 650;
+}
+
 .licenseKeyStack {
     display: grid;
     gap: 8px;
@@ -522,6 +580,29 @@ textarea:focus {
     color: var(--accent);
     outline: none;
     transform: none;
+}
+
+.productCell {
+    display: grid;
+    gap: 1px;
+}
+
+.productCell strong,
+.productCell small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.productCell strong {
+    color: var(--text);
+    font-size: 13px;
+}
+
+.productCell small {
+    color: var(--muted-2);
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .buttonRow {
@@ -659,6 +740,11 @@ tbody tr.isSelected td {
         max-width: none;
     }
 
+    .listTools,
+    .productPicker {
+        grid-template-columns: 1fr;
+    }
+
     .inlineInput {
         grid-template-columns: 1fr;
     }
@@ -746,6 +832,11 @@ tbody tr.isSelected td {
         color: var(--accent);
         font-size: 14px;
         overflow-wrap: anywhere;
+        white-space: normal;
+    }
+
+    .productCell strong,
+    .productCell small {
         white-space: normal;
     }
 

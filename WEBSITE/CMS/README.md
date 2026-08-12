@@ -35,7 +35,7 @@ Licenses are stored in `licenses/{licenseKey}`:
 
 ```json
 {
-  "licenseKey": "ANI-DEEPTH-XXXX-XXXX",
+  "licenseKey": "AD-XXXX-XXXX",
   "email": "",
   "ownerUid": "",
   "productId": "ani-deepth",

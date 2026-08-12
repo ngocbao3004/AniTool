@@ -23,11 +23,11 @@
                 </div>
             </div>
             <div class="session">
+                <span id="userEmail">Chưa đăng nhập</span>
+                <button id="signOutBtn" type="button" hidden>Đăng xuất</button>
                 <button id="themeToggleBtn" class="iconButton" type="button" title="Đổi giao diện" aria-label="Đổi giao diện">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                 </button>
-                <span id="userEmail">Chưa đăng nhập</span>
-                <button id="signOutBtn" type="button" hidden>Đăng xuất</button>
             </div>
         </section>
 
@@ -102,14 +102,27 @@
                         </div>
                     </div>
                     <form id="licenseForm" class="formGrid simpleLicenseForm">
-                        <label>
+                        <label class="wide">
                             <span>Sản phẩm</span>
-                            <select id="productId">
-                                <option value="ani-deepth">AniDeepth</option>
-                                <option value="ani-layout">Ani Layout</option>
-                                <option value="ani-anim">Ani Anim</option>
-                                <option value="ani-voice-check">Ani Voice Check</option>
-                            </select>
+                            <input id="productId" type="hidden" value="ani-deepth">
+                            <div id="productPicker" class="productPicker" role="radiogroup" aria-label="Sản phẩm">
+                                <button class="productChoice isActive" type="button" data-product-id="ani-deepth" aria-pressed="true">
+                                    <strong>AniDeepth</strong>
+                                    <span>After Effects</span>
+                                </button>
+                                <button class="productChoice" type="button" data-product-id="ani-layout" aria-pressed="false">
+                                    <strong>Ani Layout</strong>
+                                    <span>Illustrator</span>
+                                </button>
+                                <button class="productChoice" type="button" data-product-id="ani-anim" aria-pressed="false">
+                                    <strong>Ani Anim</strong>
+                                    <span>Autodesk Maya</span>
+                                </button>
+                                <button class="productChoice" type="button" data-product-id="ani-voice-check" aria-pressed="false">
+                                    <strong>Ani Voice Check</strong>
+                                    <span>Windows</span>
+                                </button>
+                            </div>
                         </label>
                         <label>
                             <span>Số ngày</span>
@@ -130,7 +143,7 @@
                         <label class="wide">
                             <span>License key</span>
                             <div class="licenseKeyStack">
-                                <input id="licenseKey" type="text" autocomplete="off" spellcheck="false" placeholder="ANI-DEEPTH-XXXX-XXXX" required>
+                                <input id="licenseKey" type="text" autocomplete="off" spellcheck="false" placeholder="AD-XXXX-XXXX" required>
                                 <div class="licenseKeyActions">
                                     <button id="generateKeyBtn" type="button">Sinh key</button>
                                     <button id="copyLicensesBtn" type="button">Copy</button>
@@ -146,7 +159,24 @@
                         <div>
                             <h2>Danh sách license</h2>
                         </div>
-                        <input id="searchInput" type="search" placeholder="Tìm key, email, liên hệ, sản phẩm">
+                        <div class="listTools">
+                            <input id="searchInput" type="search" placeholder="Tìm key, email, liên hệ, sản phẩm">
+                            <select id="softwareFilter" aria-label="Lọc theo phần mềm">
+                                <option value="all">Tất cả phần mềm</option>
+                                <option value="after-effects">After Effects</option>
+                                <option value="illustrator">Illustrator</option>
+                                <option value="maya">Autodesk Maya</option>
+                                <option value="windows">Windows</option>
+                            </select>
+                            <select id="statusFilter" aria-label="Lọc theo tình trạng">
+                                <option value="all">Tất cả tình trạng</option>
+                                <option value="available">Chưa kích hoạt</option>
+                                <option value="active">Đang dùng</option>
+                                <option value="expiring">Sắp hết hạn</option>
+                                <option value="expired">Đã quá hạn</option>
+                                <option value="blocked">Đã khóa</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="tableWrap">
                         <table>
