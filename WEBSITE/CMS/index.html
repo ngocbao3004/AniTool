@@ -112,7 +112,11 @@
             <div class="workspacePanels">
                 <section id="createTabPanel" class="panel licenseEditor tabPanel isActive" role="tabpanel" aria-labelledby="createTabBtn">
                     <form id="licenseForm" class="formGrid simpleLicenseForm">
-                        <label class="wide">
+                        <label>
+                            <span>Gmail</span>
+                            <input id="licenseEmail" type="email" autocomplete="off" placeholder="customer@gmail.com" required>
+                        </label>
+                        <label>
                             <span>Sản phẩm</span>
                             <input id="productId" type="hidden" value="ani-deepth">
                             <div id="productDropdown" class="smartSelect">
@@ -133,10 +137,6 @@
                         <label>
                             <span>Số máy</span>
                             <input id="maxDevices" type="number" min="1" max="20" value="1" required>
-                        </label>
-                        <label>
-                            <span>Gmail</span>
-                            <input id="licenseEmail" type="email" autocomplete="off" placeholder="customer@gmail.com" required>
                         </label>
                         <label class="wide">
                             <span>Thông tin liên hệ</span>
