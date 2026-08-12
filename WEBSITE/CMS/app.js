@@ -292,13 +292,13 @@ function renderLicenses() {
         const contactInfo = license.contactInfo || "-";
         return `
             <tr data-license-id="${escapeHtml(license.id)}"${selected}>
-                <td title="${escapeHtml(license.id)}"><button class="tableCopyKey" type="button" data-copy-license-key="${escapeHtml(license.licenseKey || license.id)}">${escapeHtml(license.licenseKey || license.id)}</button></td>
-                <td>${escapeHtml(getProductName(license.productId))}</td>
-                <td><span class="statusPill ${escapeHtml(getStatusClass(status))}">${escapeHtml(getStatusLabel(status))}</span></td>
-                <td>${escapeHtml(license.durationDays ?? 0)}</td>
-                <td>${escapeHtml(getDeviceCount(license))} / ${escapeHtml(license.maxDevices || 1)}</td>
-                <td title="${escapeHtml(email)}">${escapeHtml(email)}</td>
-                <td title="${escapeHtml(contactInfo)}">${escapeHtml(contactInfo)}</td>
+                <td data-label="Key" title="${escapeHtml(license.id)}"><button class="tableCopyKey" type="button" data-copy-license-key="${escapeHtml(license.licenseKey || license.id)}">${escapeHtml(license.licenseKey || license.id)}</button></td>
+                <td data-label="Sản phẩm">${escapeHtml(getProductName(license.productId))}</td>
+                <td data-label="Trạng thái"><span class="statusPill ${escapeHtml(getStatusClass(status))}">${escapeHtml(getStatusLabel(status))}</span></td>
+                <td data-label="Ngày">${escapeHtml(license.durationDays ?? 0)}</td>
+                <td data-label="Máy">${escapeHtml(getDeviceCount(license))} / ${escapeHtml(license.maxDevices || 1)}</td>
+                <td data-label="Gmail" title="${escapeHtml(email)}">${escapeHtml(email)}</td>
+                <td data-label="Liên hệ" title="${escapeHtml(contactInfo)}">${escapeHtml(contactInfo)}</td>
             </tr>
         `;
     }).join("");
