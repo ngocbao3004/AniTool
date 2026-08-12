@@ -1,161 +1,224 @@
 <!doctype html>
-<html lang='en' data-theme='dark'>
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset='utf-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <title>AniTool - AniDeepth for After Effects</title>
-  <meta name='description' content='AniDeepth helps After Effects animators move 3D layers in depth while preserving the visual size they already composed.'>
-  <link rel='preload' href='assets/ani-deepth-hero.png' as='image'>
-  <link rel='stylesheet' href='styles.css'>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AniTool - Animation Workflow Products</title>
+  <meta name="description" content="AniTool is a product hub for focused animation workflow tools, starting with AniDeepth for After Effects.">
+  <link rel="preload" href="assets/ani-deepth-hero.png" as="image">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class='siteHeader' data-header>
-    <a class='brand' href='#top' aria-label='AniTool home'>
-      <span class='brandMark'>AT</span>
+  <header class="siteHeader" data-header>
+    <a class="brand" href="#top" aria-label="AniTool home">
+      <span class="brandMark">AT</span>
       <span>AniTool</span>
     </a>
-    <button class='navToggle' type='button' aria-label='Open navigation' aria-expanded='false' data-nav-toggle>
+    <button class="navToggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>
       <span></span><span></span><span></span>
     </button>
-    <nav class='nav' data-nav aria-label='Main navigation'>
-      <a href='#workflow' data-i18n='nav.workflow'>Workflow</a>
-      <a href='#features' data-i18n='nav.features'>Features</a>
-      <a href='#pricing' data-i18n='nav.pricing'>Pricing</a>
-      <a href='#faq' data-i18n='nav.faq'>FAQ</a>
-      <a class='navCta' href='mailto:sales@anitool.local?subject=AniDeepth%20License' data-i18n='nav.cta'>Get license</a>
+    <nav class="nav" data-nav aria-label="Main navigation">
+      <a href="#products" data-i18n="nav.products">Products</a>
+      <a href="#platforms" data-i18n="nav.platforms">Platforms</a>
+      <a href="#roadmap" data-i18n="nav.roadmap">Roadmap</a>
+      <a href="#pricing" data-i18n="nav.pricing">Pricing</a>
+      <a href="#account" data-i18n="nav.account">Account</a>
+      <a class="navCta" href="mailto:sales@anitool.local?subject=AniTool%20Early%20Access" data-i18n="nav.cta">Early access</a>
     </nav>
-    <div class='siteControls' aria-label='Site settings'>
-      <div class='segmentedControl' role='group' aria-label='Language'>
-        <button type='button' data-lang-option='en' aria-pressed='true'>EN</button>
-        <button type='button' data-lang-option='vi' aria-pressed='false'>VI</button>
+    <div class="siteControls" aria-label="Site settings">
+      <div class="segmentedControl" role="group" aria-label="Language">
+        <button type="button" data-lang-option="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang-option="vi" aria-pressed="false">VI</button>
       </div>
-      <div class='segmentedControl' role='group' aria-label='Currency'>
-        <button type='button' data-currency-option='USD' aria-pressed='true'>USD</button>
-        <button type='button' data-currency-option='VND' aria-pressed='false'>VND</button>
-      </div>
-      <button class='themeToggle' type='button' data-theme-toggle aria-label='Toggle color mode'><span data-theme-label>Dark</span></button>
+      <button class="themeToggle iconButton" type="button" data-theme-toggle aria-label="Dark mode" title="Dark mode">
+        <i class="fa-solid fa-moon" data-theme-icon aria-hidden="true"></i>
+        <span class="srOnly" data-theme-label>Dark mode</span>
+      </button>
     </div>
   </header>
 
-  <main id='top'>
-    <section class='hero' aria-labelledby='heroTitle'>
-      <div class='heroBackdrop' aria-hidden='true'></div>
-      <div class='heroInner'>
-        <p class='eyebrow' data-i18n='hero.eyebrow'>After Effects CEP product by AniTool</p>
-        <h1 id='heroTitle'>AniDeepth</h1>
-        <p class='heroCopy' data-i18n='hero.copy'>Move 3D layers through camera depth and world axes while keeping the frame you already designed visually stable.</p>
-        <div class='heroActions' aria-label='Primary actions'>
-          <a class='button primary' href='mailto:sales@anitool.local?subject=AniDeepth%20License' data-i18n='hero.buy'>Buy license</a>
-          <a class='button secondary' href='#workflow' data-i18n='hero.workflow'>See workflow</a>
+  <main id="top">
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="heroBackdrop" aria-hidden="true"></div>
+      <div class="sectionInner heroLayout">
+        <div class="heroCopyBlock">
+          <p class="eyebrow" data-i18n="hero.eyebrow">Animation product hub</p>
+          <h1 id="heroTitle" data-i18n="hero.title">AniTool builds focused tools for motion designers.</h1>
+          <p class="heroCopy" data-i18n="hero.copy">A growing product family for After Effects and production workflow. Small tools, clear jobs, faster animation days.</p>
+          <div class="heroActions" aria-label="Primary actions">
+            <a class="button primary" href="#products" data-i18n="hero.primary">Browse products</a>
+            <a class="button secondary" href="#roadmap" data-i18n="hero.secondary">View roadmap</a>
+          </div>
         </div>
-        <dl class='heroStats' aria-label='Product highlights'>
-          <div><dt data-i18n='hero.stat1.label'>Modes</dt><dd data-i18n='hero.stat1.value'>Camera + World</dd></div>
-          <div><dt data-i18n='hero.stat2.label'>Table</dt><dd data-i18n='hero.stat2.value'>Layer depth</dd></div>
-          <div><dt data-i18n='hero.stat3.label'>Editing</dt><dd data-i18n='hero.stat3.value'>Interactive</dd></div>
-        </dl>
+        <aside class="heroShelf" aria-label="AniTool product shelf">
+          <div class="shelfHeader">
+            <span data-i18n="shelf.label">Product shelf</span>
+            <strong data-i18n="shelf.count">3 products planned</strong>
+          </div>
+          <a class="shelfItem active" href="#pricing">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <span><strong>AniDeepth</strong><small data-i18n="shelf.deepth">Depth layout for After Effects</small></span>
+          </a>
+          <a class="shelfItem" href="#products">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span><strong>AniMotion</strong><small data-i18n="shelf.motion">Animation helpers coming later</small></span>
+          </a>
+          <a class="shelfItem" href="#products">
+            <i class="fa-solid fa-cubes" aria-hidden="true"></i>
+            <span><strong>AniScene</strong><small data-i18n="shelf.scene">Scene utility slot</small></span>
+          </a>
+        </aside>
       </div>
     </section>
 
-    <section class='introBand' aria-label='Product summary'>
-      <div class='sectionInner introGrid'>
-        <p data-i18n='intro.copy'>AniDeepth is built for motion designers who need fast depth layout inside After Effects without manually recalculating scale every time a layer moves.</p>
-        <ul class='inlineProofs' aria-label='Core uses'>
-          <li data-i18n='intro.use1'>Cloud layers</li>
-          <li data-i18n='intro.use2'>Parallax scenes</li>
-          <li data-i18n='intro.use3'>3D card stacks</li>
-          <li data-i18n='intro.use4'>Late object snaps</li>
+    <section class="introBand" aria-label="AniTool summary">
+      <div class="sectionInner introGrid">
+        <p data-i18n="intro.copy">AniTool is structured as a company/product hub first. Each product can have its own license, docs, support path, and release cycle.</p>
+        <ul class="inlineProofs" aria-label="Product principles">
+          <li data-i18n="intro.use1">Multi-product</li>
+          <li data-i18n="intro.use2">License-ready</li>
+          <li data-i18n="intro.use3">AE first</li>
+          <li data-i18n="intro.use4">Expandable</li>
         </ul>
       </div>
     </section>
 
-    <section class='section' id='workflow' aria-labelledby='workflowTitle'>
-      <div class='sectionInner twoColumn'>
+    <section class="section productsSection" id="products" aria-labelledby="productsTitle">
+      <div class="sectionInner">
+        <div class="sectionLead splitLead">
+          <div>
+            <p class="eyebrow" data-i18n="products.eyebrow">Products</p>
+            <h2 id="productsTitle" data-i18n="products.title">A product family, not a single-tool page.</h2>
+          </div>
+          <p data-i18n="products.copy">AniDeepth is the first release. The layout leaves room for future tools without rebuilding the site later.</p>
+        </div>
+        <div class="productGrid catalogGrid">
+          <article class="productCard featuredProduct">
+            <div class="productTopline"><span data-i18n="products.deepth.meta">After Effects / Available</span><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></div>
+            <div class="productIcon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
+            <h3>AniDeepth</h3>
+            <p data-i18n="products.deepth.copy">Interactive 3D depth layout with preserve-view scale, distribute modes, and object snap tools.</p>
+            <div class="productTags"><span>CEP</span><span>3D Layer</span><span>Depth</span></div>
+            <a class="button primary" href="#pricing" data-i18n="products.deepth.cta">Open product</a>
+          </article>
+          <article class="productCard isSoon">
+            <div class="productTopline"><span data-i18n="products.motion.meta">Planned</span></div>
+            <div class="productIcon"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></div>
+            <h3>AniMotion</h3>
+            <p data-i18n="products.motion.copy">A future product slot for animation helpers, presets, timing tools, or motion workflow automation.</p>
+            <div class="productTags"><span>Motion</span><span>Preset</span><span>Future</span></div>
+          </article>
+          <article class="productCard isSoon">
+            <div class="productTopline"><span data-i18n="products.scene.meta">Planned</span></div>
+            <div class="productIcon"><i class="fa-solid fa-cubes" aria-hidden="true"></i></div>
+            <h3>AniScene</h3>
+            <p data-i18n="products.scene.copy">A future product slot for scene layout, object management, cleanup, or production utilities.</p>
+            <div class="productTags"><span>Scene</span><span>Utility</span><span>Future</span></div>
+          </article>
+          <article class="productCard isSoon">
+            <div class="productTopline"><span data-i18n="products.render.meta">Research</span></div>
+            <div class="productIcon"><i class="fa-solid fa-film" aria-hidden="true"></i></div>
+            <h3>AniRender</h3>
+            <p data-i18n="products.render.copy">A possible product lane for render prep, delivery checks, or output workflow support.</p>
+            <div class="productTags"><span>Render</span><span>QC</span><span>Idea</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section platformsSection" id="platforms" aria-labelledby="platformsTitle">
+      <div class="sectionInner platformLayout">
         <div>
-          <p class='eyebrow' data-i18n='workflow.eyebrow'>Workflow</p>
-          <h2 id='workflowTitle' data-i18n='workflow.title'>Set the frame first. Adjust depth after.</h2>
+          <p class="eyebrow" data-i18n="platforms.eyebrow">Platforms</p>
+          <h2 id="platformsTitle" data-i18n="platforms.title">Organized for more software later.</h2>
         </div>
-        <div class='steps' aria-label='AniDeepth workflow steps'>
-          <article><span>01</span><h3 data-i18n='workflow.step1.title'>Select layers</h3><p data-i18n='workflow.step1.copy'>Auto load reads the selected layers into a compact table. Lock the table when the layout needs to stay fixed.</p></article>
-          <article><span>02</span><h3 data-i18n='workflow.step2.title'>Choose movement</h3><p data-i18n='workflow.step2.copy'>Use Camera Depth for camera-facing moves or World X, Y, Z for stable axis-based layout.</p></article>
-          <article><span>03</span><h3 data-i18n='workflow.step3.title'>Drag interactively</h3><p data-i18n='workflow.step3.copy'>Move layers live with sensitivity levels, modifier keys, undo, redo, and reset per layer.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section class='section featureBand' id='features' aria-labelledby='featuresTitle'>
-      <div class='sectionInner'>
-        <div class='sectionLead'>
-          <p class='eyebrow' data-i18n='features.eyebrow'>Features</p>
-          <h2 id='featuresTitle' data-i18n='features.title'>Depth tools that respect an animator's existing composition.</h2>
-        </div>
-        <div class='featureGrid'>
-          <article><h3 data-i18n='features.card1.title'>Preserve-view scale</h3><p data-i18n='features.card1.copy'>Depth changes compensate scale so a designed frame stays visually consistent while the layer position changes.</p></article>
-          <article><h3 data-i18n='features.card2.title'>Layer depth table</h3><p data-i18n='features.card2.copy'>See current depth for selected layers, reorder the working list, and keep action controls close to each row.</p></article>
-          <article><h3 data-i18n='features.card3.title'>Distribute modes</h3><p data-i18n='features.card3.copy'>Together, Spread, Random Order, Random Depth, and Random Chaos cover clean spacing through playful variation.</p></article>
-          <article><h3 data-i18n='features.card4.title'>Snap 3D objects</h3><p data-i18n='features.card4.copy'>Snap one 3D layer to another at the current frame, optionally parent it, and choose below, same, or above depth.</p></article>
+        <div class="platformGrid">
+          <article class="platformItem active"><i class="fa-solid fa-cube" aria-hidden="true"></i><h3>After Effects</h3><p data-i18n="platforms.ae">Current product lane.</p></article>
+          <article class="platformItem"><i class="fa-solid fa-video" aria-hidden="true"></i><h3>Premiere Pro</h3><p data-i18n="platforms.pr">Future lane.</p></article>
+          <article class="platformItem"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><h3>Illustrator</h3><p data-i18n="platforms.ai">Future lane.</p></article>
         </div>
       </div>
     </section>
 
-    <section class='section modesSection' aria-labelledby='modesTitle'>
-      <div class='sectionInner modesLayout'>
-        <div><p class='eyebrow' data-i18n='modes.eyebrow'>Distribute</p><h2 id='modesTitle' data-i18n='modes.title'>Five depth behaviors, named for memory.</h2></div>
-        <div class='modeList' aria-label='Distribute mode explanations'>
-          <article><h3 data-i18n='modes.together.title'>Together</h3><p data-i18n='modes.together.copy'>All selected layers move by the same amount.</p></article>
-          <article><h3 data-i18n='modes.spread.title'>Spread</h3><p data-i18n='modes.spread.copy'>Layers are evenly distributed by the table order.</p></article>
-          <article><h3 data-i18n='modes.randomOrder.title'>Random Order</h3><p data-i18n='modes.randomOrder.copy'>Even spacing, shuffled near and far positions.</p></article>
-          <article><h3 data-i18n='modes.randomDepth.title'>Random Depth</h3><p data-i18n='modes.randomDepth.copy'>Table order remains, depth rhythm becomes uneven.</p></article>
-          <article><h3 data-i18n='modes.randomChaos.title'>Random Chaos</h3><p data-i18n='modes.randomChaos.copy'>Both order and depth spacing become irregular.</p></article>
+    <section class="section detailBand" id="pricing" aria-labelledby="detailTitle">
+      <div class="sectionInner detailLayout">
+        <div class="productPreview" aria-hidden="true"></div>
+        <div class="detailCopy">
+          <p class="eyebrow" data-i18n="detail.eyebrow">Featured product</p>
+          <h2 id="detailTitle">AniDeepth</h2>
+          <p data-i18n="detail.copy">The first AniTool product focuses on depth layout for After Effects. It helps animators move 3D layers while preserving the visual size they already composed.</p>
+          <div class="detailStats">
+            <div><span data-i18n="detail.priceLabel">Early access</span><strong data-price data-usd="29" data-vnd="690000">$29</strong></div>
+            <div><span data-i18n="detail.platformLabel">Platform</span><strong>After Effects</strong></div>
+          </div>
+          <div class="heroActions">
+            <a class="button primary" href="mailto:sales@anitool.local?subject=AniDeepth%20Creator%20License" data-i18n="detail.buy">Buy AniDeepth</a>
+            <a class="button secondary" href="mailto:sales@anitool.local?subject=AniTool%20Product%20Question" data-i18n="detail.contact">Ask about products</a>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class='section pricingBand' id='pricing' aria-labelledby='pricingTitle'>
-      <div class='sectionInner pricingLayout'>
-        <div class='pricingCopy'>
-          <p class='eyebrow' data-i18n='pricing.eyebrow'>License</p>
-          <h2 id='pricingTitle' data-i18n='pricing.title'>Early access for After Effects artists.</h2>
-          <p data-i18n='pricing.copy'>Use this public page to sell, collect interest, or send buyers to a manual license flow while the payment system is still being built.</p>
+    <section class="section roadmapSection" id="roadmap" aria-labelledby="roadmapTitle">
+      <div class="sectionInner roadmapLayout">
+        <div>
+          <p class="eyebrow" data-i18n="roadmap.eyebrow">Roadmap</p>
+          <h2 id="roadmapTitle" data-i18n="roadmap.title">The site can grow product by product.</h2>
         </div>
-        <div class='priceCards'>
-          <article class='priceCard featured'>
-            <p class='plan' data-i18n='pricing.creator.plan'>Creator</p>
-            <p class='price' data-price data-usd='29' data-vnd='690000'>$29</p>
-            <p class='note' data-i18n='pricing.creator.note'>Early access license</p>
-            <ul><li data-i18n='pricing.creator.item1'>AniDeepth CEP panel</li><li data-i18n='pricing.creator.item2'>License key activation</li><li data-i18n='pricing.creator.item3'>Updates during beta</li></ul>
-            <a class='button primary full' href='mailto:sales@anitool.local?subject=AniDeepth%20Creator%20License' data-i18n='pricing.creator.cta'>Buy Creator</a>
-          </article>
-          <article class='priceCard'>
-            <p class='plan' data-i18n='pricing.studio.plan'>Studio</p>
-            <p class='price' data-i18n='pricing.studio.price'>Custom</p>
-            <p class='note' data-i18n='pricing.studio.note'>For multiple seats</p>
-            <ul><li data-i18n='pricing.studio.item1'>Team license tracking</li><li data-i18n='pricing.studio.item2'>Device reset support</li><li data-i18n='pricing.studio.item3'>Priority fixes</li></ul>
-            <a class='button secondary full' href='mailto:sales@anitool.local?subject=AniDeepth%20Studio%20License' data-i18n='pricing.studio.cta'>Contact</a>
-          </article>
+        <div class="roadmapList">
+          <article><span>01</span><h3 data-i18n="roadmap.step1.title">Release AniDeepth</h3><p data-i18n="roadmap.step1.copy">Stabilize license, docs, installer, and sales flow for the first product.</p></article>
+          <article><span>02</span><h3 data-i18n="roadmap.step2.title">Add product pages</h3><p data-i18n="roadmap.step2.copy">Each new product gets its own card, detail page, pricing, and download path.</p></article>
+          <article><span>03</span><h3 data-i18n="roadmap.step3.title">Connect CMS</h3><p data-i18n="roadmap.step3.copy">Use the CMS for license control, product status, customers, and release notes.</p></article>
         </div>
       </div>
     </section>
 
-    <section class='section faqSection' id='faq' aria-labelledby='faqTitle'>
-      <div class='sectionInner faqLayout'>
-        <div><p class='eyebrow' data-i18n='faq.eyebrow'>FAQ</p><h2 id='faqTitle' data-i18n='faq.title'>Before release.</h2></div>
-        <div class='faqList'>
-          <details><summary data-i18n='faq.q1'>Does it replace After Effects 3D?</summary><p data-i18n='faq.a1'>No. It works with After Effects 3D layers and gives you a faster way to place them in depth.</p></details>
-          <details><summary data-i18n='faq.q2'>Does it support Camera Depth and World axes?</summary><p data-i18n='faq.a2'>Yes. Camera Depth is for camera-relative depth. World X, Y, and Z are stable axis modes.</p></details>
-          <details><summary data-i18n='faq.q3'>Is the payment system connected?</summary><p data-i18n='faq.a3'>Not yet. This page is ready for sales copy and manual license requests first.</p></details>
+    <section class="section accountSection" id="account" aria-labelledby="accountTitle">
+      <div class="sectionInner accountLayout">
+        <div class="accountLead">
+          <p class="eyebrow" data-i18n="account.eyebrow">Account</p>
+          <h2 id="accountTitle" data-i18n="account.title">Register once, unlock AniTool products.</h2>
+          <p data-i18n="account.copy">Use Google sign-in to create your AniTool account. Licenses linked by the admin will appear here with product status and remaining days.</p>
+        </div>
+        <div class="accountPanel">
+          <div data-account-guest>
+            <h3 data-i18n="account.guestTitle">Sign in or register</h3>
+            <p data-i18n="account.guestCopy">Your first Google sign-in creates the account. No separate password is needed.</p>
+            <button class="button primary accountButton" type="button" data-site-google>
+              <i class="fa-brands fa-google" aria-hidden="true"></i>
+              <span data-i18n="account.google">Continue with Google</span>
+            </button>
+          </div>
+          <div data-account-user hidden>
+            <div class="accountHeader">
+              <div>
+                <span data-i18n="account.signedIn">Signed in</span>
+                <strong data-account-email>--</strong>
+              </div>
+              <button class="button secondary compactButton" type="button" data-site-signout data-i18n="account.signOut">Sign out</button>
+            </div>
+            <div class="accountMeta">
+              <span data-i18n="account.uid">UID</span>
+              <code data-account-uid>--</code>
+            </div>
+            <div class="licenseList" data-license-list>
+              <p class="emptyAccount" data-i18n="account.loading">Loading licenses...</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class='footer'>
-    <div class='sectionInner footerInner'>
-      <a class='brand' href='#top' aria-label='AniTool home'><span class='brandMark'>AT</span><span>AniTool</span></a>
-      <p data-i18n='footer.copy'>AniTool builds practical animation tools for After Effects artists.</p>
-      <a href='mailto:sales@anitool.local?subject=AniDeepth'>sales@anitool.local</a>
+  <footer class="footer">
+    <div class="sectionInner footerInner">
+      <a class="brand" href="#top" aria-label="AniTool home"><span class="brandMark">AT</span><span>AniTool</span></a>
+      <p data-i18n="footer.copy">AniTool builds practical animation products for production artists.</p>
+      <a href="mailto:sales@anitool.local?subject=AniTool">sales@anitool.local</a>
     </div>
   </footer>
 
-  <script src='script.js'></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
