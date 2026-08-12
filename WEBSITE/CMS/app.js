@@ -901,7 +901,8 @@ function renderLicenses() {
         const daysRemaining = getDaysRemaining(license);
         const matchesSoftware = softwareFilter === "all" || meta.softwareKey === softwareFilter;
         const matchesStatus = statusFilter === "all"
-            || effectiveStatus === statusFilter
+            ? effectiveStatus !== "voided"
+            : effectiveStatus === statusFilter
             || (statusFilter === "expiring" && effectiveStatus === "active" && daysRemaining !== null && daysRemaining <= 14);
         const haystack = [
             license.id,
