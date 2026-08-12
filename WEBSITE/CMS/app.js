@@ -10,6 +10,7 @@ import {
 import {
     addDoc,
     collection,
+    deleteDoc,
     doc,
     getDoc,
     getFirestore,
@@ -616,6 +617,21 @@ async function updateLicenseFields(license, fields, action, detail = {}) {
     await writeLicenseEvent(license, action, detail);
 }
 
+async function deleteLicenseDocument(license, action = "license-delete", detail = {}) {
+    await writeLicenseEvent(license, action, {
+        ...detail,
+        deletedLicense: {
+            licenseKey: license.licenseKey || license.id,
+            productId: license.productId || "",
+            email: license.email || "",
+            contactInfo: license.contactInfo || "",
+            status: license.status || "",
+            ownerUid: license.ownerUid || ""
+        }
+    });
+    await deleteDoc(doc(db, "licenses", license.id));
+}
+
 function buildStatusFields(license, nextStatus) {
     const fields = { status: nextStatus };
     const previousStatus = String(license.status || "available").toLowerCase();
@@ -655,8 +671,22 @@ async function updateLicenseStatus(license, nextStatus) {
         return;
     }
 
-    if (normalizedStatus === "voided" && !window.confirm("Hủy key này? Document vẫn được giữ để tra lịch sử, nhưng key sẽ không dùng được nữa.")) {
-        renderLicenses();
+    if (normalizedStatus === "voided") {
+        if (!window.confirm("Hủy key này sẽ xóa hẳn license khỏi database. Tiếp tục?")) {
+            renderLicenses();
+            return;
+        }
+
+        await deleteLicenseDocument(
+            license,
+            "license-delete",
+            { from: currentStatus, reason: "voided-from-status-menu" }
+        );
+        selectedLicenseIds.delete(license.id);
+        if (selectedLicenseId === license.id) {
+            selectedLicenseId = "";
+        }
+        setStatus(`Đã xóa license ${license.licenseKey || license.id}.`);
         return;
     }
     if (normalizedStatus === "blocked" && !window.confirm("Ban/khóa key này? Người dùng sẽ không thể dùng license này.")) {
@@ -873,7 +903,26 @@ async function applyBulkStatus(nextStatus) {
         setStatus("Không có license phù hợp để đổi trạng thái.");
         return;
     }
-    if ((normalizedStatus === "voided" || normalizedStatus === "blocked")
+    if (normalizedStatus === "voided") {
+        if (!window.confirm(`Hủy key sẽ xóa hẳn ${editableTargets.length} license khỏi database. Tiếp tục?`)) {
+            return;
+        }
+
+        setStatus(`Đang xóa ${editableTargets.length} license...`);
+        await Promise.all(editableTargets.map((license) => deleteLicenseDocument(
+            license,
+            "bulk-license-delete",
+            { from: String(license.status || "available").toLowerCase(), reason: "bulk-voided-from-status-menu" }
+        )));
+        editableTargets.forEach((license) => selectedLicenseIds.delete(license.id));
+        if (editableTargets.some((license) => license.id === selectedLicenseId)) {
+            selectedLicenseId = "";
+        }
+        setStatus(`Đã xóa ${editableTargets.length} license.`);
+        return;
+    }
+
+    if (normalizedStatus === "blocked"
         && !window.confirm(`Áp dụng "${option.label}" cho ${editableTargets.length} license?`)) {
         return;
     }
