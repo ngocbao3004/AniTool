@@ -271,6 +271,7 @@ let customerLicenses = [];
 let customerLicenseUnsubscribe = null;
 let currentUser = null;
 let authReady = false;
+let signedUiUserId = "";
 
 function t(key) {
   const dictionary = translations[state.lang] || translations.en;
@@ -544,6 +545,7 @@ async function syncCustomerProfile(user) {
 
 function showGuestAccount() {
   currentUser = null;
+  signedUiUserId = "";
   customerLicenses = [];
   if (customerLicenseUnsubscribe) {
     customerLicenseUnsubscribe();
@@ -551,11 +553,15 @@ function showGuestAccount() {
   }
   if (accountGuest) accountGuest.hidden = false;
   if (accountUser) accountUser.hidden = true;
+  setLoginCtaState(null);
+  updateLicenseSummary(0, "account.noLicensesState");
   if (!accountStatus?.classList.contains("isError")) setAccountStatus("");
 }
 
 function showUserAccount(user) {
   currentUser = user;
+  const isSameUiUser = signedUiUserId === user.uid;
+  signedUiUserId = user.uid;
   if (accountGuest) accountGuest.hidden = true;
   if (accountUser) accountUser.hidden = false;
   const displayName = user.displayName || (user.email ? user.email.replace(/@.*/, "") : "AniTool user");
@@ -574,16 +580,25 @@ function showUserAccount(user) {
       if (accountInitials) accountInitials.hidden = false;
     }
   }
+  setLoginCtaState(user);
   setAccountStatus(t("account.signedInStatus"));
-  updateLicenseSummary(null, "account.loadingShort");
-  if (accountLicenseList) accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(t("account.loading"))}</p>`;
+  if (!isSameUiUser) {
+    updateLicenseSummary(null, "account.loadingShort");
+    if (accountLicenseList) accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(t("account.loading"))}</p>`;
+  }
+}
+
+function subscribeCustomerLicenses(user) {
+  if (!user) return;
   if (customerLicenseUnsubscribe) customerLicenseUnsubscribe();
   const licenseQuery = query(collection(siteDb, "licenses"), where("ownerUid", "==", user.uid));
   customerLicenseUnsubscribe = onSnapshot(licenseQuery, (snapshot) => {
+    if (!currentUser || currentUser.uid !== user.uid) return;
     customerLicenses = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
     customerLicenses.sort((a, b) => String(a.productId || "").localeCompare(String(b.productId || "")));
     renderCustomerLicenses();
   }, (error) => {
+    if (!currentUser || currentUser.uid !== user.uid) return;
     if (accountLicenseList) accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(error.message)}</p>`;
     setAccountStatus(getAuthErrorMessage(error), true);
   });
@@ -681,7 +696,7 @@ siteGoogleButton?.addEventListener("click", async () => {
     const result = await signInWithPopup(siteAuth, googleProvider);
     if (result?.user) {
       showUserAccount(result.user);
-      setAccountStatus(t("account.signedInStatus"));
+      subscribeCustomerLicenses(result.user);
       document.getElementById("account")?.scrollIntoView({ block: "start" });
     }
   } catch (error) {
@@ -704,6 +719,7 @@ siteGoogleButton?.addEventListener("click", async () => {
 getRedirectResult(siteAuth).then((result) => {
   if (result?.user) {
     showUserAccount(result.user);
+    subscribeCustomerLicenses(result.user);
     scrollToAccountAfterRedirect();
   }
 }).catch((error) => {
@@ -720,6 +736,7 @@ onAuthStateChanged(siteAuth, async (user) => {
   }
   showUserAccount(user);
   scrollToAccountAfterRedirect();
+  subscribeCustomerLicenses(user);
   try {
     await syncCustomerProfile(user);
   } catch (error) {
