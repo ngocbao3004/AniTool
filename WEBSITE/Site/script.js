@@ -1,10 +1,12 @@
 import { firebaseConfig } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
+  browserLocalPersistence,
   getAuth,
   getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
+  setPersistence,
   signInWithRedirect,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -21,6 +23,9 @@ import {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const siteAuth = getAuth(firebaseApp);
+const authPersistenceReady = setPersistence(siteAuth, browserLocalPersistence).catch((error) => {
+  console.warn(error);
+});
 const siteDb = getFirestore(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
@@ -87,6 +92,7 @@ const translations = {
     "account.guestCopy": "Your first Google sign-in creates the account. No separate password is needed.",
     "account.google": "Continue with Google",
     "account.redirecting": "Redirecting to Google...",
+    "account.signedInStatus": "Signed in successfully.",
     "account.unauthorizedDomain": "This domain is not authorized in Firebase. Add ngocbao3004.github.io in Authentication settings.",
     "account.signedIn": "Signed in",
     "account.signOut": "Sign out",
@@ -162,6 +168,7 @@ const translations = {
     "account.guestCopy": "L\u1ea7n \u0111\u0103ng nh\u1eadp Google \u0111\u1ea7u ti\u00ean s\u1ebd t\u1ea1o t\u00e0i kho\u1ea3n. Kh\u00f4ng c\u1ea7n m\u1eadt kh\u1ea9u ri\u00eang.",
     "account.google": "Ti\u1ebfp t\u1ee5c v\u1edbi Google",
     "account.redirecting": "\u0110ang chuy\u1ec3n sang Google...",
+    "account.signedInStatus": "\u0110\u0103ng nh\u1eadp th\u00e0nh c\u00f4ng.",
     "account.unauthorizedDomain": "Domain n\u00e0y ch\u01b0a \u0111\u01b0\u1ee3c cho ph\u00e9p trong Firebase. Th\u00eam ngocbao3004.github.io trong Authentication settings.",
     "account.signedIn": "\u0110\u00e3 \u0111\u0103ng nh\u1eadp",
     "account.signOut": "\u0110\u0103ng xu\u1ea5t",
@@ -203,6 +210,7 @@ const siteSignOutButton = document.querySelector("[data-site-signout]");
 let customerLicenses = [];
 let customerLicenseUnsubscribe = null;
 let currentUser = null;
+let authReady = false;
 
 function t(key) {
   const dictionary = translations[state.lang] || translations.en;
@@ -264,6 +272,21 @@ function applyTheme() {
   localStorage.setItem("anitool.theme", state.theme);
 }
 
+function setLoginCtaState(user) {
+  const loginLabel = document.querySelector(".loginCta [data-i18n='nav.login']");
+  if (!loginLabel) return;
+  loginLabel.textContent = user ? (user.displayName || user.email || "My account") : t("nav.login");
+}
+
+function scrollToAccountAfterRedirect() {
+  const url = new URL(window.location.href);
+  if (url.hash === "#account") return;
+  if (sessionStorage.getItem("anitool.loginRedirect") !== "1") return;
+  sessionStorage.removeItem("anitool.loginRedirect");
+  requestAnimationFrame(() => {
+    document.getElementById("account")?.scrollIntoView({ block: "start" });
+  });
+}
 function setAccountStatus(message = "", isError = false) {
   if (!accountStatus) return;
   accountStatus.textContent = message;
@@ -291,7 +314,7 @@ function getDaysLeftLabel(expiresAt) {
   if (Number.isNaN(end.getTime())) return escapeHtml(expiresAt);
   const days = Math.ceil((end.getTime() - Date.now()) / 86400000);
   if (days < 0) return t("account.expired");
-  return state.lang === "vi" ? `${days} ngày` : `${days} days`;
+  return state.lang === "vi" ? `${days} ng\u00e0y` : `${days} days`;
 }
 
 function renderCustomerLicenses() {
@@ -402,23 +425,30 @@ siteGoogleButton?.addEventListener("click", async () => {
     setAccountStatus(getAuthErrorMessage(error), true);
   }
 });
-getRedirectResult(siteAuth).catch((error) => {
+getRedirectResult(siteAuth).then((result) => {
+  if (result?.user) {
+    showUserAccount(result.user);
+    scrollToAccountAfterRedirect();
+  }
+}).catch((error) => {
   setAccountStatus(getAuthErrorMessage(error), true);
 });
 siteSignOutButton?.addEventListener("click", () => {
   signOut(siteAuth);
 });
 onAuthStateChanged(siteAuth, async (user) => {
+  authReady = true;
   if (!user) {
     showGuestAccount();
     return;
   }
+  showUserAccount(user);
+  scrollToAccountAfterRedirect();
   try {
     await syncCustomerProfile(user);
   } catch (error) {
     console.warn(error);
   }
-  showUserAccount(user);
 });
 themeToggle.addEventListener("click", () => {
   state.theme = state.theme === "dark" ? "light" : "dark";
