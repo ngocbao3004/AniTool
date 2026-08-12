@@ -12,6 +12,11 @@
     --accent: #ffcc70;
     --accent-on: #633615;
     --accent-hover: #c08a3e;
+    --brand-logo: #FFCC70;
+    --google-button-bg: #131314;
+    --google-button-hover: #1f1f20;
+    --google-button-line: #8e918f;
+    --google-button-text: #e3e3e3;
     --danger: #d87b6d;
     --ok: #8ccf9b;
     --shadow: rgba(0, 0, 0, 0.34);
@@ -42,6 +47,11 @@ html[data-theme="light"] {
     --accent: #c08a3e;
     --accent-on: #fff8ea;
     --accent-hover: #9b6826;
+    --brand-logo: #c08a3e;
+    --google-button-bg: #ffffff;
+    --google-button-hover: #f8f8f8;
+    --google-button-line: #747775;
+    --google-button-text: #1f1f1f;
     --danger: #b45a4f;
     --ok: #4a8b5e;
     --shadow: rgba(76, 54, 22, 0.13);
@@ -143,17 +153,16 @@ button:focus-visible {
 }
 
 .brandMark {
-    display: inline-grid;
+    display: block;
+    flex: none;
     width: 42px;
     height: 42px;
     min-width: 42px;
-    place-items: center;
-    border-radius: var(--radius-inner);
-    background: var(--accent);
-    color: var(--accent-on);
-    font-size: 12px;
-    font-weight: 900;
-    box-shadow: 0 14px 34px color-mix(in srgb, var(--accent) 22%, transparent);
+    color: var(--brand-logo);
+}
+
+.brandMark path {
+    fill: currentColor;
 }
 
 h1,
@@ -310,24 +319,24 @@ code {
     justify-content: center;
     gap: 10px;
     margin-top: 22px;
-    background: var(--accent);
-    color: var(--accent-on);
+    border: 1px solid var(--google-button-line);
+    background: var(--google-button-bg);
+    color: var(--google-button-text);
 }
 
 .googleButton:hover,
 .googleButton:focus-visible {
-    background: var(--accent-hover);
+    border-color: var(--google-button-line);
+    background: var(--google-button-hover);
+    color: var(--google-button-text);
 }
 
 .googleMark {
-    display: inline-grid;
-    width: 22px;
-    height: 22px;
-    place-items: center;
-    border-radius: 50%;
-    background: var(--accent-on);
-    color: var(--accent);
-    font-weight: 900;
+    display: block;
+    flex: none;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
 }
 
 .identityBox {

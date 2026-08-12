@@ -14,6 +14,11 @@
   --accent-ink: #1d1409;
   --accent-on: #633615;
   --accent-hover: #C08A3E;
+  --brand-logo: #FFCC70;
+  --google-button-bg: #131314;
+  --google-button-hover: #1f1f20;
+  --google-button-line: #8e918f;
+  --google-button-text: #e3e3e3;
   --shadow: rgba(0, 0, 0, 0.4);
   --soft-shadow: 0 28px 70px rgba(0, 0, 0, 0.24);
   --max: 1180px;
@@ -42,6 +47,11 @@ html[data-theme="light"] {
   --accent-ink: #181109;
   --accent-on: #FFF8EA;
   --accent-hover: #9B6826;
+  --brand-logo: #c08a3e;
+  --google-button-bg: #ffffff;
+  --google-button-hover: #f8f8f8;
+  --google-button-line: #747775;
+  --google-button-text: #1f1f1f;
   --shadow: rgba(46, 38, 24, 0.14);
   --soft-shadow: 0 26px 58px rgba(56, 45, 26, 0.12);
 }
@@ -88,17 +98,13 @@ button { font: inherit; }
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; min-width: max-content; font-weight: 790; }
 .brandMark {
-  display: inline-grid;
-  place-items: center;
+  display: block;
+  flex: none;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
-  color: var(--accent-on);
-  background: linear-gradient(135deg, var(--green), var(--blue));
-  font-size: 12px;
-  font-weight: 850;
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--green) 20%, transparent);
+  color: var(--brand-logo);
 }
+.brandMark path { fill: currentColor; }
 .nav { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; color: var(--muted); font-size: 14px; }
 .nav a,
 .siteControls button {
@@ -350,6 +356,19 @@ h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.2; letter-spacing: 0; }
 .deviceApprovalStatus { margin: 10px 0 0 !important; font-size: 13px; }
 .deviceApprovalStatus.isError { color: var(--coral) !important; }
 .accountButton { width: 100%; min-height: 52px; gap: 10px; margin-top: 14px; font-size: 15px; }
+.googleButton {
+  border: 1px solid var(--google-button-line);
+  background: var(--google-button-bg);
+  color: var(--google-button-text);
+  box-shadow: none;
+}
+.googleButton:hover,
+.googleButton:focus-visible {
+  border-color: var(--google-button-line);
+  background: var(--google-button-hover);
+  color: var(--google-button-text);
+}
+.googleMark { display: block; flex: none; width: 18px; height: 18px; object-fit: contain; }
 .accountSignedHeader { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 16px; box-shadow: inset 0 -1px color-mix(in srgb, var(--text) 7%, transparent); }
 .accountIdentity { display: flex; align-items: center; min-width: 0; gap: 14px; }
 .accountAvatar {

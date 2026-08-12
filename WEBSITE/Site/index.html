@@ -12,7 +12,7 @@
 <body>
   <header class="siteHeader" data-header>
     <a class="brand" href="#top" aria-label="AniTool home">
-      <span class="brandMark">AT</span>
+      <svg class="brandMark" viewBox="0 0 360 360" aria-hidden="true" focusable="false"><path d="M271.63,0H88.37C39.57,0,0,39.57,0,88.37v183.25c0,15.71,4.1,30.47,11.3,43.26,15.13,26.93,43.97,45.12,77.07,45.12h41.3v-44.92h-7.12c-1.45,0-2.87-.13-4.23-.4-12.7-2.42-21-15.58-16.9-28.48l53.94-169.82,53.93,169.82c4.1,12.91-4.2,26.06-16.9,28.48-1.36.27-2.78.4-4.23.4h-7.11v44.92h90.6c33.01,0,61.8-18.1,76.96-44.92,7.27-12.83,11.41-27.66,11.41-43.45V88.37c0-48.81-39.57-88.37-88.37-88.37ZM45.33,272.77c-.01-.38-.01-.76-.01-1.14V88.37c0-23.73,19.31-43.05,43.05-43.05h36.07l-79.11,227.44ZM240.11,45.33h31.52c23.73,0,43.05,19.31,43.05,43.05v183.25c0,3.32-.38,6.55-1.09,9.66L240.11,45.33Z"/></svg>
       <span>AniTool</span>
     </a>
     <button class="navToggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>
@@ -165,8 +165,8 @@
           <div data-account-guest>
             <h3 data-i18n="account.guestTitle">Sign in or register</h3>
             <p data-i18n="account.guestCopy">Your first Google sign-in creates the account. No separate password is needed.</p>
-            <button class="button primary accountButton" type="button" data-site-google>
-              <i class="fa-brands fa-google" aria-hidden="true"></i>
+            <button class="button accountButton googleButton" type="button" data-site-google>
+              <img class="googleMark" src="./assets/google-g.svg" alt="">
               <span data-i18n="account.google">Continue with Google</span>
             </button>
           </div>
@@ -260,7 +260,7 @@
 
   <footer class="footer">
     <div class="sectionInner footerInner">
-      <a class="brand" href="#top" aria-label="AniTool home"><span class="brandMark">AT</span><span>AniTool</span></a>
+      <a class="brand" href="#top" aria-label="AniTool home"><svg class="brandMark" viewBox="0 0 360 360" aria-hidden="true" focusable="false"><path d="M271.63,0H88.37C39.57,0,0,39.57,0,88.37v183.25c0,15.71,4.1,30.47,11.3,43.26,15.13,26.93,43.97,45.12,77.07,45.12h41.3v-44.92h-7.12c-1.45,0-2.87-.13-4.23-.4-12.7-2.42-21-15.58-16.9-28.48l53.94-169.82,53.93,169.82c4.1,12.91-4.2,26.06-16.9,28.48-1.36.27-2.78.4-4.23.4h-7.11v44.92h90.6c33.01,0,61.8-18.1,76.96-44.92,7.27-12.83,11.41-27.66,11.41-43.45V88.37c0-48.81-39.57-88.37-88.37-88.37ZM45.33,272.77c-.01-.38-.01-.76-.01-1.14V88.37c0-23.73,19.31-43.05,43.05-43.05h36.07l-79.11,227.44ZM240.11,45.33h31.52c23.73,0,43.05,19.31,43.05,43.05v183.25c0,3.32-.38,6.55-1.09,9.66L240.11,45.33Z"/></svg><span>AniTool</span></a>
       <p data-i18n="footer.copy">AniTool builds practical animation products for production artists.</p>
       <a href="mailto:sales@anitool.local?subject=AniTool">sales@anitool.local</a>
     </div>
