@@ -7,7 +7,7 @@
   <meta name="description" content="AniTool is a product hub for focused animation workflow tools, starting with AniDeepth for After Effects.">
   <link rel="preload" href="assets/ani-deepth-hero.png" as="image">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=auth-20260812-2">
+  <link rel="stylesheet" href="styles.css?v=auth-20260812-3">
 </head>
 <body>
   <header class="siteHeader" data-header>
@@ -148,6 +148,7 @@
           <p data-i18n="account.copy">Use Google sign-in to create your AniTool account. Licenses linked by the admin will appear here with product status and remaining days.</p>
         </div>
         <div class="accountPanel">
+          <p class="accountStatus" data-account-status role="status" hidden></p>
           <div data-account-guest>
             <h3 data-i18n="account.guestTitle">Sign in or register</h3>
             <p data-i18n="account.guestCopy">Your first Google sign-in creates the account. No separate password is needed.</p>
@@ -155,7 +156,6 @@
               <i class="fa-brands fa-google" aria-hidden="true"></i>
               <span data-i18n="account.google">Continue with Google</span>
             </button>
-            <p class="accountStatus" data-account-status role="status" hidden></p>
           </div>
           <div data-account-user hidden>
             <div class="accountHeader">
@@ -221,6 +221,6 @@
     </div>
   </footer>
 
-  <script type="module" src="script.js?v=auth-20260812-2"></script>
+  <script type="module" src="script.js?v=auth-20260812-3"></script>
 </body>
 </html>

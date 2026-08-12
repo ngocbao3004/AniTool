@@ -299,7 +299,8 @@ function setAccountStatus(message = "", isError = false) {
 
 function getAuthErrorMessage(error) {
   if (error?.code === "auth/unauthorized-domain") return t("account.unauthorizedDomain");
-  return error?.message || "Unable to sign in.";
+  const code = error?.code ? `${error.code}: ` : "";
+  return `${code}${error?.message || "Unable to sign in."}`;
 }
 function getProductName(productId) {
   const names = {
@@ -372,6 +373,7 @@ function showGuestAccount() {
   }
   if (accountGuest) accountGuest.hidden = false;
   if (accountUser) accountUser.hidden = true;
+  if (!accountStatus?.classList.contains("isError")) setAccountStatus("");
 }
 
 function showUserAccount(user) {
@@ -380,6 +382,7 @@ function showUserAccount(user) {
   if (accountUser) accountUser.hidden = false;
   if (accountEmail) accountEmail.textContent = user.email || user.displayName || user.uid;
   if (accountUid) accountUid.textContent = user.uid;
+  setAccountStatus(t("account.signedInStatus"));
   if (accountLicenseList) accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(t("account.loading"))}</p>`;
   if (customerLicenseUnsubscribe) customerLicenseUnsubscribe();
   const licenseQuery = query(collection(siteDb, "licenses"), where("ownerUid", "==", user.uid));
@@ -389,6 +392,7 @@ function showUserAccount(user) {
     renderCustomerLicenses();
   }, (error) => {
     if (accountLicenseList) accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(error.message)}</p>`;
+    setAccountStatus(getAuthErrorMessage(error), true);
   });
 }
 function setScrolledState() {
