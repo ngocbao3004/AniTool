@@ -44,6 +44,11 @@ const els = {
     licenseCount: document.getElementById("licenseCount"),
     availableCount: document.getElementById("availableCount"),
     activeCount: document.getElementById("activeCount"),
+    expiringCount: document.getElementById("expiringCount"),
+    expiredCount: document.getElementById("expiredCount"),
+    pausedCount: document.getElementById("pausedCount"),
+    blockedCount: document.getElementById("blockedCount"),
+    voidedCount: document.getElementById("voidedCount"),
     licenseForm: document.getElementById("licenseForm"),
     licenseKey: document.getElementById("licenseKey"),
     licenseEmail: document.getElementById("licenseEmail"),
@@ -459,9 +464,36 @@ function getDeviceCount(license) {
 }
 
 function updateMetrics() {
+    const counts = {
+        available: 0,
+        active: 0,
+        expiring: 0,
+        expired: 0,
+        paused: 0,
+        blocked: 0,
+        voided: 0
+    };
+
+    licenses.forEach((license) => {
+        const effectiveStatus = getEffectiveStatus(license);
+        const daysRemaining = getDaysRemaining(license);
+
+        if (Object.prototype.hasOwnProperty.call(counts, effectiveStatus)) {
+            counts[effectiveStatus] += 1;
+        }
+        if (effectiveStatus === "active" && daysRemaining !== null && daysRemaining <= 14) {
+            counts.expiring += 1;
+        }
+    });
+
     els.licenseCount.textContent = String(licenses.length);
-    els.availableCount.textContent = String(licenses.filter((license) => getEffectiveStatus(license) === "available").length);
-    els.activeCount.textContent = String(licenses.filter((license) => getEffectiveStatus(license) === "active").length);
+    els.availableCount.textContent = String(counts.available);
+    els.activeCount.textContent = String(counts.active);
+    els.expiringCount.textContent = String(counts.expiring);
+    els.expiredCount.textContent = String(counts.expired);
+    els.pausedCount.textContent = String(counts.paused);
+    els.blockedCount.textContent = String(counts.blocked);
+    els.voidedCount.textContent = String(counts.voided);
 }
 
 function generateLicenseKey(productId = els.productId.value) {
@@ -764,9 +796,13 @@ function renderStatusSelect(license, effectiveStatus) {
 function renderDurationControl(license) {
     return `
         <div class="durationControl">
-            <button class="durationButton" type="button" data-license-day-delta="-1" data-license-id="${escapeHtml(license.id)}" title="Trừ 1 ngày">-</button>
+            <button class="durationButton" type="button" data-license-day-delta="-1" data-license-id="${escapeHtml(license.id)}" title="Trừ 1 ngày" aria-label="Trừ 1 ngày">
+                <i class="fa-solid fa-minus" aria-hidden="true"></i>
+            </button>
             <input class="durationInput" type="number" min="${MIN_DURATION_DAYS}" max="${MAX_DURATION_DAYS}" value="${escapeHtml(clampDurationDays(license.durationDays || 1))}" data-license-duration="${escapeHtml(license.id)}" aria-label="Số ngày license">
-            <button class="durationButton" type="button" data-license-day-delta="1" data-license-id="${escapeHtml(license.id)}" title="Cộng 1 ngày">+</button>
+            <button class="durationButton" type="button" data-license-day-delta="1" data-license-id="${escapeHtml(license.id)}" title="Cộng 1 ngày" aria-label="Cộng 1 ngày">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            </button>
         </div>
     `;
 }
@@ -780,6 +816,7 @@ function updateSelectionUI() {
     const hasSelection = selectedCount > 0;
     els.bulkAddDays.disabled = !hasSelection;
     els.bulkSubtractDays.disabled = !hasSelection;
+    els.bulkDayAmount.disabled = !hasSelection;
     els.bulkStatusSelectBtn.disabled = !hasSelection;
     els.bulkStatusSelectBtn.classList.toggle("isDisabled", !hasSelection);
 }

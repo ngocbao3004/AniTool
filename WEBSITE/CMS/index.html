@@ -67,12 +67,7 @@
         </section>
 
         <section id="adminPanel" class="workspace" hidden>
-            <section class="dashboardIntro">
-                <div>
-                    <span class="eyebrow">License desk</span>
-                    <h2>Bảng điều khiển AniTool</h2>
-                    <p>Tạo license sau khi khách thanh toán, gửi key cho khách, theo dõi key nào đã kích hoạt và reset máy khi cần.</p>
-                </div>
+            <section class="dashboardIntro" aria-label="License status summary">
                 <div class="metricGrid">
                     <div>
                         <span>Tổng license</span>
@@ -85,6 +80,26 @@
                     <div>
                         <span>Đang dùng</span>
                         <strong id="activeCount">0</strong>
+                    </div>
+                    <div>
+                        <span>Sắp hết hạn</span>
+                        <strong id="expiringCount">0</strong>
+                    </div>
+                    <div>
+                        <span>Hết hạn</span>
+                        <strong id="expiredCount">0</strong>
+                    </div>
+                    <div>
+                        <span>Bảo lưu</span>
+                        <strong id="pausedCount">0</strong>
+                    </div>
+                    <div>
+                        <span>Đã khóa</span>
+                        <strong id="blockedCount">0</strong>
+                    </div>
+                    <div>
+                        <span>Đã hủy</span>
+                        <strong id="voidedCount">0</strong>
                     </div>
                 </div>
             </section>
@@ -185,9 +200,13 @@
                                 <div id="bulkStatusOptionList" class="smartOptionList"></div>
                             </div>
                         </div>
-                        <button id="bulkSubtractDays" type="button" disabled aria-label="Trừ ngày">-</button>
+                        <button id="bulkSubtractDays" type="button" disabled aria-label="Trừ ngày">
+                            <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                        </button>
                         <input id="bulkDayAmount" class="bulkDayInput" type="number" min="1" max="36500" value="1" aria-label="Số ngày cần cộng hoặc trừ">
-                        <button id="bulkAddDays" class="primaryButton" type="button" disabled aria-label="Cộng ngày">+</button>
+                        <button id="bulkAddDays" class="primaryButton" type="button" disabled aria-label="Cộng ngày">
+                            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="tableWrap">
                         <table>
