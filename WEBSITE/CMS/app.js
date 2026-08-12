@@ -140,7 +140,7 @@ const statusLabels = {
     active: "Đang dùng",
     paused: "Bảo lưu",
     blocked: "Đã khóa",
-    expired: "Hết hạn",
+    expired: "Hết hạn / khóa",
     voided: "Đã hủy"
 };
 
@@ -148,7 +148,7 @@ const editableStatusOptions = [
     { value: "available", label: "Chưa kích hoạt" },
     { value: "active", label: "Đang dùng" },
     { value: "paused", label: "Bảo lưu" },
-    { value: "expired", label: "Hết hạn" },
+    { value: "expired", label: "Hết hạn / khóa" },
     { value: "blocked", label: "Ban / khóa" },
     { value: "voided", label: "Hủy key" }
 ];
@@ -166,7 +166,7 @@ const statusFilterOptions = [
     { value: "available", label: "Chưa kích hoạt" },
     { value: "active", label: "Đang dùng" },
     { value: "expiring", label: "Sắp hết hạn" },
-    { value: "expired", label: "Đã quá hạn" },
+    { value: "expired", label: "Hết hạn / khóa" },
     { value: "paused", label: "Bảo lưu" },
     { value: "blocked", label: "Đã khóa" },
     { value: "voided", label: "Đã hủy" }

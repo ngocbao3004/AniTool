@@ -128,7 +128,7 @@ const translations = {
     "license.status.active": "Active",
     "license.status.pending": "Pending",
     "license.status.disabled": "Disabled",
-    "license.status.expired": "Expired",
+    "license.status.expired": "Expired / Locked",
     "license.status.paused": "Paused",
     "license.status.blocked": "Blocked",
     "license.status.voided": "Voided"
@@ -229,7 +229,7 @@ const translations = {
     "license.status.active": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
     "license.status.pending": "\u0110ang ch\u1edd",
     "license.status.disabled": "\u0110\u00e3 t\u1eaft",
-    "license.status.expired": "\u0110\u00e3 h\u1ebft h\u1ea1n",
+    "license.status.expired": "H\u1ebft h\u1ea1n / \u0111\u00e3 kh\u00f3a",
     "license.status.paused": "B\u1ea3o l\u01b0u",
     "license.status.blocked": "\u0110\u00e3 kh\u00f3a",
     "license.status.voided": "\u0110\u00e3 h\u1ee7y"
@@ -474,6 +474,11 @@ function getLicenseStateClass(license) {
   return status;
 }
 
+function getLicenseDisplayStatus(license) {
+  const stateClass = getLicenseStateClass(license);
+  return stateClass === "expired" ? "expired" : license.status || "active";
+}
+
 function updateLicenseSummary(count, stateKey) {
   if (accountLicenseCount) {
     accountLicenseCount.textContent = Number.isFinite(count) ? String(count) : "--";
@@ -498,8 +503,8 @@ function renderCustomerLicenses() {
     return;
   }
   accountLicenseList.innerHTML = customerLicenses.map((license) => {
-    const status = license.status || "active";
     const stateClass = getLicenseStateClass(license);
+    const status = getLicenseDisplayStatus(license);
     const expiresAt = getExpiryLabel(license);
     return `
       <article class="licenseCard is-${escapeHtml(stateClass)}">
