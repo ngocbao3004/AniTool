@@ -1,18 +1,19 @@
 :root {
-  --bg: #111111;
-  --bg-soft: #191919;
-  --surface: #202020;
-  --surface-2: #292929;
-  --surface-3: #343434;
-  --text: #f4f4f1;
-  --muted: #b8b8b0;
-  --muted-2: #83837b;
-  --blue: #6db8f2;
-  --green: #78d98f;
-  --amber: #efbd5a;
-  --coral: #ef806f;
-  --shadow: rgba(0, 0, 0, 0.36);
-  --soft-shadow: 0 28px 70px rgba(0, 0, 0, 0.22);
+  --bg: #141312;
+  --bg-soft: #1f1d19;
+  --surface: #2a2721;
+  --surface-2: #353128;
+  --surface-3: #474238;
+  --text: #f4efe6;
+  --muted: #c4baaa;
+  --muted-2: #938978;
+  --blue: #c6c8c2;
+  --green: #c79542;
+  --amber: #d2a452;
+  --coral: #bd705f;
+  --accent-ink: #1d1409;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --soft-shadow: 0 28px 70px rgba(0, 0, 0, 0.24);
   --max: 1180px;
   --header: 68px;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
@@ -24,16 +25,21 @@
 }
 
 html[data-theme="light"] {
-  --bg: #f6f5f0;
-  --bg-soft: #ecebe4;
-  --surface: #ffffff;
-  --surface-2: #ededdf;
-  --surface-3: #dfded2;
-  --text: #171716;
-  --muted: #5d625e;
-  --muted-2: #7d827c;
-  --shadow: rgba(33, 32, 24, 0.12);
-  --soft-shadow: 0 26px 58px rgba(45, 42, 30, 0.1);
+  --bg: #f4f0e7;
+  --bg-soft: #e7e1d4;
+  --surface: #fffaf0;
+  --surface-2: #ece4d5;
+  --surface-3: #d9d0bf;
+  --text: #1b1814;
+  --muted: #625a4f;
+  --muted-2: #887d6d;
+  --blue: #9ea29c;
+  --green: #a7772d;
+  --amber: #bb8940;
+  --coral: #a96154;
+  --accent-ink: #181109;
+  --shadow: rgba(46, 38, 24, 0.14);
+  --soft-shadow: 0 26px 58px rgba(56, 45, 26, 0.12);
 }
 
 * { box-sizing: border-box; }
@@ -83,7 +89,7 @@ button { font: inherit; }
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  color: #07130b;
+  color: var(--accent-ink);
   background: linear-gradient(135deg, var(--green), var(--blue));
   font-size: 12px;
   font-weight: 850;
@@ -103,7 +109,7 @@ button { font: inherit; }
 .nav a:focus-visible { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); outline: none; }
 .navCta {
   margin-left: 8px;
-  color: #07130b !important;
+  color: var(--accent-ink) !important;
   background: var(--green) !important;
   font-weight: 820;
 }
@@ -199,9 +205,9 @@ h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.2; letter-spacing: 0; }
 }
 .button:hover,
 .button:focus-visible { transform: translateY(-1px); outline: none; }
-.button.primary { color: #07130b; background: var(--green); box-shadow: 0 16px 36px color-mix(in srgb, var(--green) 22%, transparent); }
+.button.primary { color: var(--accent-ink); background: var(--green); box-shadow: 0 16px 36px color-mix(in srgb, var(--green) 22%, transparent); }
 .button.primary:hover,
-.button.primary:focus-visible { background: #8ceaa0; }
+.button.primary:focus-visible { background: #d4a95a; }
 .button.secondary { color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); }
 .button.secondary:hover,
 .button.secondary:focus-visible { background: color-mix(in srgb, var(--text) 16%, transparent); }
@@ -230,7 +236,7 @@ h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.2; letter-spacing: 0; }
 .shelfItem:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--text) 10%, transparent); }
 .shelfItem i { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 8px; color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); }
 .shelfItem.active { background: color-mix(in srgb, var(--green) 13%, var(--surface)); }
-.shelfItem.active i { color: #07130b; background: var(--green); }
+.shelfItem.active i { color: var(--accent-ink); background: var(--green); }
 .shelfItem strong,
 .shelfItem small { display: block; }
 .shelfItem small { color: var(--muted); }
@@ -276,7 +282,7 @@ h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.2; letter-spacing: 0; }
 .productCard:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--surface) 84%, var(--text)); box-shadow: 0 24px 60px color-mix(in srgb, var(--shadow) 88%, transparent); }
 .productTopline { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; color: var(--muted-2); font-size: 12px; font-weight: 830; text-transform: uppercase; }
 .productCard.featuredProduct { background: linear-gradient(180deg, color-mix(in srgb, var(--green) 14%, var(--surface)), var(--surface)); }
-.productIcon { display: inline-grid; place-items: center; width: 42px; height: 42px; margin-bottom: 24px; border-radius: 8px; color: #07130b; background: var(--green); box-shadow: 0 14px 34px color-mix(in srgb, var(--green) 22%, transparent); }
+.productIcon { display: inline-grid; place-items: center; width: 42px; height: 42px; margin-bottom: 24px; border-radius: 8px; color: var(--accent-ink); background: var(--green); box-shadow: 0 14px 34px color-mix(in srgb, var(--green) 22%, transparent); }
 .productCard p { color: var(--muted); }
 .productTags { display: flex; flex-wrap: wrap; gap: 6px; margin: auto 0 20px; padding-top: 20px; }
 .productTags span {
@@ -324,7 +330,7 @@ h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.2; letter-spacing: 0; }
   overflow: hidden;
   border-radius: 8px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--green) 62%, var(--surface-2)), color-mix(in srgb, var(--blue) 42%, var(--surface-2)));
-  color: #07130b;
+  color: var(--accent-ink);
   font-size: 16px;
   font-weight: 860;
 }
@@ -409,7 +415,7 @@ h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.2; letter-spacing: 0; }
   height: 34px;
   min-width: 34px;
   border-radius: 8px;
-  color: #07130b !important;
+  color: var(--accent-ink) !important;
   background: var(--green);
 }
 .licenseDetail { display: grid; align-content: center; border-radius: 8px; background: color-mix(in srgb, var(--surface) 68%, transparent); padding: 10px; }
