@@ -7,7 +7,7 @@
   <meta name="description" content="AniTool is a product hub for focused animation workflow tools, starting with AniDeepth for After Effects.">
   <link rel="preload" href="assets/ani-deepth-hero.png" as="image">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=auth-20260812-3">
+  <link rel="stylesheet" href="styles.css?v=account-ui-20260812-1">
 </head>
 <body>
   <header class="siteHeader" data-header>
@@ -158,20 +158,40 @@
             </button>
           </div>
           <div data-account-user hidden>
-            <div class="accountHeader">
-              <div>
-                <span data-i18n="account.signedIn">Signed in</span>
-                <strong data-account-email>--</strong>
+            <div class="accountSignedHeader">
+              <div class="accountIdentity">
+                <div class="accountAvatar" aria-hidden="true">
+                  <img data-account-avatar-image alt="" hidden>
+                  <span data-account-initials>AT</span>
+                </div>
+                <div class="accountIdentityText">
+                  <span class="signedBadge"><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="account.signedIn">Signed in</span></span>
+                  <strong data-account-name>--</strong>
+                  <small data-account-email>--</small>
+                </div>
               </div>
-              <button class="button secondary compactButton" type="button" data-site-signout data-i18n="account.signOut">Sign out</button>
+              <button class="button secondary compactButton" type="button" data-site-signout>
+                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                <span data-i18n="account.signOut">Sign out</span>
+              </button>
             </div>
-            <div class="accountMeta">
-              <span data-i18n="account.uid">UID</span>
-              <code data-account-uid>--</code>
+            <div class="accountSummary">
+              <div>
+                <span data-i18n="account.licenses">Licenses</span>
+                <strong data-license-count>0</strong>
+              </div>
+              <div>
+                <span data-i18n="account.accountState">Account status</span>
+                <strong data-account-state>Ready</strong>
+              </div>
             </div>
             <div class="licenseList" data-license-list>
               <p class="emptyAccount" data-i18n="account.loading">Loading licenses...</p>
             </div>
+            <details class="accountSupportDetails">
+              <summary><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span data-i18n="account.supportId">Support ID</span></summary>
+              <code data-account-uid>--</code>
+            </details>
           </div>
         </div>
       </div>
@@ -221,6 +241,6 @@
     </div>
   </footer>
 
-  <script type="module" src="script.js?v=auth-20260812-3"></script>
+  <script type="module" src="script.js?v=account-ui-20260812-1"></script>
 </body>
 </html>

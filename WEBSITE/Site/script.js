@@ -99,14 +99,27 @@ const translations = {
     "account.signedIn": "Signed in",
     "account.signOut": "Sign out",
     "account.uid": "UID",
+    "account.licenses": "Licenses",
+    "account.accountState": "Account status",
+    "account.ready": "Ready",
+    "account.loadingShort": "Loading",
+    "account.noLicensesState": "No license",
+    "account.supportId": "Support ID",
     "account.loading": "Loading licenses...",
     "account.empty": "No product license is linked to this account yet.",
+    "account.emptyTitle": "No license yet",
+    "account.emptyCopy": "When an AniTool license is linked to this account, it will appear here.",
     "account.product": "Product",
+    "account.plan": "Plan",
     "account.status": "Status",
     "account.expires": "Expires",
     "account.daysLeft": "Days left",
     "account.neverExpires": "No expiry",
-    "account.expired": "Expired"
+    "account.expired": "Expired",
+    "license.status.active": "Active",
+    "license.status.pending": "Pending",
+    "license.status.disabled": "Disabled",
+    "license.status.expired": "Expired"
   },
   vi: {
     "nav.products": "S\u1ea3n ph\u1ea9m",
@@ -176,14 +189,27 @@ const translations = {
     "account.signedIn": "\u0110\u00e3 \u0111\u0103ng nh\u1eadp",
     "account.signOut": "\u0110\u0103ng xu\u1ea5t",
     "account.uid": "UID",
+    "account.licenses": "License",
+    "account.accountState": "Tr\u1ea1ng th\u00e1i",
+    "account.ready": "S\u1eb5n s\u00e0ng",
+    "account.loadingShort": "\u0110ang t\u1ea3i",
+    "account.noLicensesState": "Ch\u01b0a c\u00f3 license",
+    "account.supportId": "M\u00e3 h\u1ed7 tr\u1ee3",
     "account.loading": "\u0110ang t\u1ea3i license...",
     "account.empty": "Ch\u01b0a c\u00f3 license s\u1ea3n ph\u1ea9m n\u00e0o g\u1eafn v\u1edbi t\u00e0i kho\u1ea3n n\u00e0y.",
+    "account.emptyTitle": "Ch\u01b0a c\u00f3 license",
+    "account.emptyCopy": "Khi license AniTool \u0111\u01b0\u1ee3c g\u1eafn v\u00e0o t\u00e0i kho\u1ea3n n\u00e0y, n\u00f3 s\u1ebd hi\u1ec7n \u1edf \u0111\u00e2y.",
     "account.product": "S\u1ea3n ph\u1ea9m",
+    "account.plan": "G\u00f3i",
     "account.status": "Tr\u1ea1ng th\u00e1i",
     "account.expires": "H\u1ebft h\u1ea1n",
     "account.daysLeft": "C\u00f2n l\u1ea1i",
     "account.neverExpires": "Kh\u00f4ng h\u1ebft h\u1ea1n",
-    "account.expired": "\u0110\u00e3 h\u1ebft h\u1ea1n"
+    "account.expired": "\u0110\u00e3 h\u1ebft h\u1ea1n",
+    "license.status.active": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+    "license.status.pending": "\u0110ang ch\u1edd",
+    "license.status.disabled": "\u0110\u00e3 t\u1eaft",
+    "license.status.expired": "\u0110\u00e3 h\u1ebft h\u1ea1n"
   }
 };
 
@@ -204,8 +230,13 @@ const themeIcon = document.querySelector("[data-theme-icon]");
 const priceNodes = document.querySelectorAll("[data-price]");
 const accountGuest = document.querySelector("[data-account-guest]");
 const accountUser = document.querySelector("[data-account-user]");
+const accountName = document.querySelector("[data-account-name]");
 const accountEmail = document.querySelector("[data-account-email]");
 const accountUid = document.querySelector("[data-account-uid]");
+const accountInitials = document.querySelector("[data-account-initials]");
+const accountAvatarImage = document.querySelector("[data-account-avatar-image]");
+const accountLicenseCount = document.querySelector("[data-license-count]");
+const accountState = document.querySelector("[data-account-state]");
 const accountLicenseList = document.querySelector("[data-license-list]");
 const accountStatus = document.querySelector("[data-account-status]");
 const siteGoogleButton = document.querySelector("[data-site-google]");
@@ -257,6 +288,10 @@ function applyLanguage() {
   localStorage.setItem("anitool.lang", state.lang);
   applyPrices();
   applyTheme();
+  if (currentUser) {
+    updateLicenseSummary(customerLicenses.length);
+    renderCustomerLicenses();
+  }
 }
 
 function applyPrices() {
@@ -312,38 +347,90 @@ function getProductName(productId) {
   return names[productId] || productId || "AniTool";
 }
 
-function getDaysLeftLabel(expiresAt) {
+function getInitials(user) {
+  const label = user.displayName || user.email || "AniTool";
+  const parts = label.replace(/@.*/, "").split(/\s+/).filter(Boolean);
+  const initials = parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join("");
+  return initials || "AT";
+}
+
+function getLicenseStatusLabel(status) {
+  const normalized = String(status || "active").toLowerCase();
+  const key = `license.status.${normalized}`;
+  const label = t(key);
+  return label === key ? status || "active" : label;
+}
+
+function getDaysLeftValue(expiresAt) {
   if (!expiresAt) return t("account.neverExpires");
   const end = new Date(`${expiresAt}T23:59:59`);
-  if (Number.isNaN(end.getTime())) return escapeHtml(expiresAt);
-  const days = Math.ceil((end.getTime() - Date.now()) / 86400000);
+  if (Number.isNaN(end.getTime())) return null;
+  return Math.ceil((end.getTime() - Date.now()) / 86400000);
+}
+
+function getDaysLeftLabel(expiresAt) {
+  const days = getDaysLeftValue(expiresAt);
+  if (days === t("account.neverExpires")) return days;
+  if (days === null) return expiresAt || t("account.neverExpires");
   if (days < 0) return t("account.expired");
   return state.lang === "vi" ? `${days} ng\u00e0y` : `${days} days`;
 }
 
+function getLicenseStateClass(license) {
+  const days = getDaysLeftValue(license.expiresAt);
+  if (typeof days === "number" && days < 0) return "expired";
+  return String(license.status || "active").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+}
+
+function updateLicenseSummary(count, stateKey) {
+  if (accountLicenseCount) {
+    accountLicenseCount.textContent = Number.isFinite(count) ? String(count) : "--";
+  }
+  if (accountState) {
+    const fallbackKey = Number.isFinite(count) && count > 0 ? "account.ready" : "account.noLicensesState";
+    accountState.textContent = t(stateKey || fallbackKey);
+  }
+}
+
 function renderCustomerLicenses() {
   if (!accountLicenseList || !currentUser) return;
+  updateLicenseSummary(customerLicenses.length);
   if (customerLicenses.length === 0) {
-    accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(t("account.empty"))}</p>`;
+    accountLicenseList.innerHTML = `
+      <div class="emptyAccount">
+        <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
+        <strong>${escapeHtml(t("account.emptyTitle"))}</strong>
+        <span>${escapeHtml(t("account.emptyCopy"))}</span>
+      </div>
+    `;
     return;
   }
   accountLicenseList.innerHTML = customerLicenses.map((license) => {
     const status = license.status || "active";
+    const stateClass = getLicenseStateClass(license);
+    const expiresAt = license.expiresAt || t("account.neverExpires");
     return `
-      <article class="licenseCard">
-        <div>
-          <span>${escapeHtml(t("account.product"))}</span>
-          <strong>${escapeHtml(getProductName(license.productId))}</strong>
+      <article class="licenseCard is-${escapeHtml(stateClass)}">
+        <div class="licenseMain">
+          <span class="licenseIcon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
+          <div>
+            <span>${escapeHtml(t("account.product"))}</span>
+            <strong>${escapeHtml(getProductName(license.productId))}</strong>
+          </div>
         </div>
-        <div>
+        <div class="licenseDetail">
+          <span>${escapeHtml(t("account.plan"))}</span>
+          <strong>${escapeHtml(license.plan || "Creator")}</strong>
+        </div>
+        <div class="licenseDetail">
           <span>${escapeHtml(t("account.status"))}</span>
-          <strong>${escapeHtml(status)}</strong>
+          <strong class="licenseStatus status-${escapeHtml(stateClass)}"><i class="fa-solid fa-circle" aria-hidden="true"></i>${escapeHtml(getLicenseStatusLabel(status))}</strong>
         </div>
-        <div>
+        <div class="licenseDetail">
           <span>${escapeHtml(t("account.expires"))}</span>
-          <strong>${escapeHtml(license.expiresAt || t("account.neverExpires"))}</strong>
+          <strong>${escapeHtml(expiresAt)}</strong>
         </div>
-        <div>
+        <div class="licenseDetail">
           <span>${escapeHtml(t("account.daysLeft"))}</span>
           <strong>${escapeHtml(getDaysLeftLabel(license.expiresAt))}</strong>
         </div>
@@ -380,9 +467,24 @@ function showUserAccount(user) {
   currentUser = user;
   if (accountGuest) accountGuest.hidden = true;
   if (accountUser) accountUser.hidden = false;
-  if (accountEmail) accountEmail.textContent = user.email || user.displayName || user.uid;
+  const displayName = user.displayName || (user.email ? user.email.replace(/@.*/, "") : "AniTool user");
+  if (accountName) accountName.textContent = displayName;
+  if (accountEmail) accountEmail.textContent = user.email || user.uid;
   if (accountUid) accountUid.textContent = user.uid;
+  if (accountInitials) accountInitials.textContent = getInitials(user);
+  if (accountAvatarImage) {
+    if (user.photoURL) {
+      accountAvatarImage.src = user.photoURL;
+      accountAvatarImage.hidden = false;
+      if (accountInitials) accountInitials.hidden = true;
+    } else {
+      accountAvatarImage.removeAttribute("src");
+      accountAvatarImage.hidden = true;
+      if (accountInitials) accountInitials.hidden = false;
+    }
+  }
   setAccountStatus(t("account.signedInStatus"));
+  updateLicenseSummary(null, "account.loadingShort");
   if (accountLicenseList) accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(t("account.loading"))}</p>`;
   if (customerLicenseUnsubscribe) customerLicenseUnsubscribe();
   const licenseQuery = query(collection(siteDb, "licenses"), where("ownerUid", "==", user.uid));
