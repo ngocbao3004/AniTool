@@ -89,76 +89,84 @@
                 </div>
             </section>
 
-            <div class="workspaceGrid">
-                <div class="panelStack">
-                    <section class="panel licenseEditor">
-                        <div class="panelHeader">
-                            <div>
-                                <h2>Tạo license key</h2>
-                            </div>
-                        </div>
-                        <form id="licenseForm" class="formGrid simpleLicenseForm">
-                            <label>
-                                <span>Sản phẩm</span>
-                                <select id="productId">
-                                    <option value="ani-deepth">AniDeepth</option>
-                                    <option value="ani-layout">Ani Layout</option>
-                                    <option value="ani-anim">Ani Anim</option>
-                                    <option value="ani-voice-check">Ani Voice Check</option>
-                                </select>
-                            </label>
-                            <label>
-                                <span>Số ngày</span>
-                                <input id="durationDays" type="number" min="0" max="3650" value="365">
-                            </label>
-                            <label>
-                                <span>Số máy</span>
-                                <input id="maxDevices" type="number" min="1" max="20" value="1">
-                            </label>
-                            <label>
-                                <span>Gmail</span>
-                                <input id="licenseEmail" type="email" autocomplete="off" placeholder="email khách nếu có">
-                            </label>
-                            <label class="wide">
-                                <span>License key</span>
-                                <div class="licenseKeyRow">
-                                    <input id="licenseKey" type="text" autocomplete="off" spellcheck="false" readonly placeholder="Bấm Tạo để sinh license">
-                                    <button id="generateKeyBtn" class="primaryButton" type="submit">Tạo</button>
-                                    <button id="copyLicensesBtn" type="button">Copy</button>
-                                </div>
-                            </label>
-                        </form>
-                    </section>
-                </div>
+            <div class="workspaceTabs" role="tablist" aria-label="License workspace">
+                <button id="createTabBtn" class="workspaceTab isActive" type="button" role="tab" aria-selected="true" aria-controls="createTabPanel">Tạo license</button>
+                <button id="listTabBtn" class="workspaceTab" type="button" role="tab" aria-selected="false" aria-controls="listTabPanel">Danh sách</button>
+            </div>
 
-                <div class="panelStack">
-                    <section class="panel licenseList">
-                        <div class="panelHeader">
-                            <div>
-                                <span class="panelKicker">Quản lý</span>
-                                <h2>Danh sách license</h2>
+            <div class="workspacePanels">
+                <section id="createTabPanel" class="panel licenseEditor tabPanel isActive" role="tabpanel" aria-labelledby="createTabBtn">
+                    <div class="panelHeader">
+                        <div>
+                            <h2>Tạo license key</h2>
+                        </div>
+                    </div>
+                    <form id="licenseForm" class="formGrid simpleLicenseForm">
+                        <label>
+                            <span>Sản phẩm</span>
+                            <select id="productId">
+                                <option value="ani-deepth">AniDeepth</option>
+                                <option value="ani-layout">Ani Layout</option>
+                                <option value="ani-anim">Ani Anim</option>
+                                <option value="ani-voice-check">Ani Voice Check</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Số ngày</span>
+                            <input id="durationDays" type="number" min="1" max="3650" value="365" required>
+                        </label>
+                        <label>
+                            <span>Số máy</span>
+                            <input id="maxDevices" type="number" min="1" max="20" value="1" required>
+                        </label>
+                        <label>
+                            <span>Gmail</span>
+                            <input id="licenseEmail" type="email" autocomplete="off" placeholder="customer@gmail.com" required>
+                        </label>
+                        <label class="wide">
+                            <span>Thông tin liên hệ</span>
+                            <input id="contactInfo" type="text" autocomplete="off" placeholder="Zalo, Facebook, link khách hàng...">
+                        </label>
+                        <label class="wide">
+                            <span>License key</span>
+                            <div class="licenseKeyStack">
+                                <input id="licenseKey" type="text" autocomplete="off" spellcheck="false" placeholder="ANI-DEEPTH-XXXX-XXXX" required>
+                                <div class="licenseKeyActions">
+                                    <button id="generateKeyBtn" type="button">Sinh key</button>
+                                    <button id="copyLicensesBtn" type="button">Copy</button>
+                                    <button id="createLicenseBtn" class="primaryButton" type="submit">Tạo</button>
+                                </div>
                             </div>
-                            <input id="searchInput" type="search" placeholder="Tìm key, email, sản phẩm">
+                        </label>
+                    </form>
+                </section>
+
+                <section id="listTabPanel" class="panel licenseList tabPanel" role="tabpanel" aria-labelledby="listTabBtn" hidden>
+                    <div class="panelHeader">
+                        <div>
+                            <h2>Danh sách license</h2>
                         </div>
-                        <div class="tableWrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Key</th>
-                                        <th>Sản phẩm</th>
-                                        <th>Trạng thái</th>
-                                        <th>Ngày</th>
-                                        <th>Thiết bị</th>
-                                        <th>Chủ sở hữu</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="licenseRows">
-                                    <tr><td colspan="6" class="empty">Chưa có license.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-                </div>
+                        <input id="searchInput" type="search" placeholder="Tìm key, email, liên hệ, sản phẩm">
+                    </div>
+                    <div class="tableWrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày</th>
+                                    <th>Máy</th>
+                                    <th>Gmail</th>
+                                    <th>Liên hệ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="licenseRows">
+                                <tr><td colspan="7" class="empty">Chưa có license.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
         </section>
 

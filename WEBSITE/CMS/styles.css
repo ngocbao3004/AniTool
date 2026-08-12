@@ -245,8 +245,7 @@ code {
     padding: 34px;
 }
 
-.eyebrow,
-.panelKicker {
+.eyebrow {
     display: block;
     margin-bottom: 9px;
     color: var(--accent);
@@ -366,17 +365,42 @@ code {
     line-height: 1;
 }
 
-.workspaceGrid {
-    display: grid;
-    grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
-    gap: 16px;
-    align-items: start;
+.workspaceTabs {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(460px, 100%);
+    gap: 4px;
+    margin-top: 16px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+    padding: 4px;
 }
 
-.panelStack {
+.workspaceTab {
+    background: transparent;
+    color: var(--muted);
+    box-shadow: none;
+}
+
+.workspaceTab:hover,
+.workspaceTab:focus-visible {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    transform: none;
+}
+
+.workspaceTab.isActive {
+    background: var(--accent);
+    color: var(--accent-on);
+    box-shadow: 0 12px 26px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.workspacePanels {
     display: grid;
-    align-content: start;
-    gap: 16px;
+    margin-top: 12px;
+}
+
+.tabPanel {
+    min-width: 0;
 }
 
 .panel {
@@ -466,15 +490,38 @@ textarea:focus {
     align-items: end;
 }
 
-.licenseKeyRow {
+.licenseKeyStack {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 8px;
-    align-items: center;
 }
 
-.licenseKeyRow input[readonly] {
-    cursor: text;
+.licenseKeyActions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.tableCopyKey {
+    display: inline;
+    min-height: 0;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-weight: 760;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tableCopyKey:hover,
+.tableCopyKey:focus-visible {
+    background: transparent;
+    color: var(--accent);
+    outline: none;
+    transform: none;
 }
 
 .buttonRow {
@@ -491,7 +538,7 @@ textarea:focus {
 
 table {
     width: 100%;
-    min-width: 760px;
+    min-width: 880px;
     border-collapse: collapse;
 }
 
@@ -568,8 +615,7 @@ tbody tr.isSelected td {
 }
 
 @media (max-width: 1040px) {
-    .dashboardIntro,
-    .workspaceGrid {
+    .dashboardIntro {
         grid-template-columns: 1fr;
     }
 }
@@ -617,7 +663,12 @@ tbody tr.isSelected td {
         grid-template-columns: 1fr;
     }
 
-    .licenseKeyRow {
+    .licenseKeyActions {
         grid-template-columns: 1fr;
+    }
+
+    .workspaceTabs {
+        display: grid;
+        width: 100%;
     }
 }

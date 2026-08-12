@@ -45,12 +45,19 @@ const els = {
     licenseForm: document.getElementById("licenseForm"),
     licenseKey: document.getElementById("licenseKey"),
     licenseEmail: document.getElementById("licenseEmail"),
+    contactInfo: document.getElementById("contactInfo"),
     productId: document.getElementById("productId"),
     durationDays: document.getElementById("durationDays"),
     maxDevices: document.getElementById("maxDevices"),
     copyLicensesBtn: document.getElementById("copyLicensesBtn"),
+    generateKeyBtn: document.getElementById("generateKeyBtn"),
+    createLicenseBtn: document.getElementById("createLicenseBtn"),
     searchInput: document.getElementById("searchInput"),
-    licenseRows: document.getElementById("licenseRows")
+    licenseRows: document.getElementById("licenseRows"),
+    createTabBtn: document.getElementById("createTabBtn"),
+    listTabBtn: document.getElementById("listTabBtn"),
+    createTabPanel: document.getElementById("createTabPanel"),
+    listTabPanel: document.getElementById("listTabPanel")
 };
 
 let licenses = [];
@@ -102,6 +109,13 @@ function setStatus(message, isError = false) {
     els.statusText.classList.toggle("isError", isError);
 }
 
+function copyText(value) {
+    if (!navigator.clipboard) {
+        return Promise.reject(new Error("Clipboard API is not available."));
+    }
+    return navigator.clipboard.writeText(value);
+}
+
 function escapeHtml(value) {
     return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -136,12 +150,21 @@ function getStatusClass(status) {
     return `is${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
-function clampNumber(value, min, max, fallback) {
-    const parsed = parseInt(value, 10);
-    if (!Number.isFinite(parsed)) {
-        return fallback;
+function parseRequiredInteger(input, label, min, max) {
+    const raw = String(input.value || "").trim();
+    const parsed = Number(raw);
+
+    if (!raw) {
+        throw new Error(`${label} là bắt buộc.`);
     }
-    return Math.max(min, Math.min(max, parsed));
+    if (!Number.isInteger(parsed)) {
+        throw new Error(`${label} phải là số nguyên.`);
+    }
+    if (parsed < min || parsed > max) {
+        throw new Error(`${label} phải từ ${min} đến ${max}.`);
+    }
+
+    return parsed;
 }
 
 function getDeviceCount(license) {
@@ -181,70 +204,63 @@ function clearForm() {
     lastGeneratedKeys = [];
     els.licenseKey.value = "";
     els.licenseEmail.value = "";
+    els.contactInfo.value = "";
     els.productId.value = "ani-deepth";
     els.durationDays.value = "365";
     els.maxDevices.value = "1";
     renderLicenses();
 }
 
-function fillForm(license) {
-    selectedLicenseId = license.id;
-    lastGeneratedKeys = [];
-    els.licenseKey.value = license.licenseKey || license.id;
-    els.licenseEmail.value = license.email || "";
-    els.productId.value = license.productId || "ani-deepth";
-    els.durationDays.value = String(license.durationDays ?? 365);
-    els.maxDevices.value = String(license.maxDevices || 1);
-    renderLicenses();
-}
-
 function getFormPayload() {
     const email = String(els.licenseEmail.value || "").trim().toLowerCase();
+    const contactInfo = String(els.contactInfo.value || "").trim();
+    const licenseKey = normalizeLicenseKey(els.licenseKey.value);
+
+    if (!email) {
+        throw new Error("Gmail là bắt buộc.");
+    }
+    if (!els.licenseEmail.checkValidity()) {
+        throw new Error("Gmail không hợp lệ.");
+    }
+    if (!licenseKey) {
+        throw new Error("License key là bắt buộc. Bấm Sinh key hoặc nhập key trước.");
+    }
 
     return {
+        id: licenseKey,
         data: {
             email,
             ownerUid: "",
             productId: els.productId.value || "ani-deepth",
             status: "available",
             plan: "creator",
-            durationDays: clampNumber(els.durationDays.value, 0, 3650, 365),
-            maxDevices: clampNumber(els.maxDevices.value, 1, 20, 1),
+            durationDays: parseRequiredInteger(els.durationDays, "Số ngày", 1, 3650),
+            maxDevices: parseRequiredInteger(els.maxDevices, "Số máy", 1, 20),
+            contactInfo,
             note: "",
             updatedAt: serverTimestamp()
         }
     };
 }
 
-async function saveLicenseDocument(id, data) {
+async function saveNewLicenseDocument(id, data) {
     const targetRef = doc(db, "licenses", id);
     const existing = await getDoc(targetRef);
-    const existingData = existing.exists() ? existing.data() : {};
-    const shouldStampActivation = data.status === "active" && data.ownerUid && !existingData.activatedAt;
+
+    if (existing.exists()) {
+        throw new Error("License key này đã tồn tại. Hãy sinh key khác.");
+    }
 
     await setDoc(targetRef, {
         ...data,
         licenseKey: id,
-        createdBy: existingData.createdBy || (auth.currentUser ? auth.currentUser.uid : ""),
-        createdByEmail: existingData.createdByEmail || (auth.currentUser ? auth.currentUser.email || "" : ""),
-        createdAt: existing.exists() ? existingData.createdAt || serverTimestamp() : serverTimestamp(),
-        devices: Array.isArray(existingData.devices) ? existingData.devices : [],
-        deviceCount: typeof existingData.deviceCount === "number" ? existingData.deviceCount : 0,
-        activatedAt: shouldStampActivation ? serverTimestamp() : existingData.activatedAt || null
-    }, { merge: true });
-}
-
-async function generateUniqueLicense(payload) {
-    for (let attempt = 0; attempt < 20; attempt++) {
-        const key = generateLicenseKey(payload.data.productId);
-        const keySnap = await getDoc(doc(db, "licenses", key));
-        if (!keySnap.exists()) {
-            await saveLicenseDocument(key, { ...payload.data, licenseKey: key });
-            return key;
-        }
-    }
-
-    throw new Error("Không sinh được license key duy nhất. Hãy thử lại.");
+        createdBy: auth.currentUser ? auth.currentUser.uid : "",
+        createdByEmail: auth.currentUser ? auth.currentUser.email || "" : "",
+        createdAt: serverTimestamp(),
+        devices: [],
+        deviceCount: 0,
+        activatedAt: null
+    });
 }
 
 function renderLicenses() {
@@ -255,6 +271,7 @@ function renderLicenses() {
             license.id,
             license.licenseKey || "",
             license.email || "",
+            license.contactInfo || "",
             license.ownerUid || "",
             license.productId || "",
             getProductName(license.productId),
@@ -264,25 +281,38 @@ function renderLicenses() {
     });
 
     if (filtered.length === 0) {
-        els.licenseRows.innerHTML = '<tr><td colspan="6" class="empty">Chưa có license phù hợp.</td></tr>';
+        els.licenseRows.innerHTML = '<tr><td colspan="7" class="empty">Chưa có license phù hợp.</td></tr>';
         return;
     }
 
     els.licenseRows.innerHTML = filtered.map((license) => {
         const status = license.status || "available";
         const selected = license.id === selectedLicenseId ? " class=\"isSelected\"" : "";
-        const owner = license.email || license.ownerUid || "-";
+        const email = license.email || "-";
+        const contactInfo = license.contactInfo || "-";
         return `
             <tr data-license-id="${escapeHtml(license.id)}"${selected}>
-                <td title="${escapeHtml(license.id)}">${escapeHtml(license.licenseKey || license.id)}</td>
+                <td title="${escapeHtml(license.id)}"><button class="tableCopyKey" type="button" data-copy-license-key="${escapeHtml(license.licenseKey || license.id)}">${escapeHtml(license.licenseKey || license.id)}</button></td>
                 <td>${escapeHtml(getProductName(license.productId))}</td>
                 <td><span class="statusPill ${escapeHtml(getStatusClass(status))}">${escapeHtml(getStatusLabel(status))}</span></td>
                 <td>${escapeHtml(license.durationDays ?? 0)}</td>
                 <td>${escapeHtml(getDeviceCount(license))} / ${escapeHtml(license.maxDevices || 1)}</td>
-                <td title="${escapeHtml(owner)}">${escapeHtml(owner)}</td>
+                <td title="${escapeHtml(email)}">${escapeHtml(email)}</td>
+                <td title="${escapeHtml(contactInfo)}">${escapeHtml(contactInfo)}</td>
             </tr>
         `;
     }).join("");
+}
+
+function setActiveWorkspaceTab(name) {
+    const showCreate = name !== "list";
+
+    els.createTabBtn.classList.toggle("isActive", showCreate);
+    els.listTabBtn.classList.toggle("isActive", !showCreate);
+    els.createTabBtn.setAttribute("aria-selected", showCreate ? "true" : "false");
+    els.listTabBtn.setAttribute("aria-selected", showCreate ? "false" : "true");
+    els.createTabPanel.hidden = !showCreate;
+    els.listTabPanel.hidden = showCreate;
 }
 
 function getAdminSetupMessage(user) {
@@ -361,15 +391,31 @@ els.licenseForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
         const payload = getFormPayload();
-        const createdKey = await generateUniqueLicense(payload);
 
-        selectedLicenseId = createdKey;
-        lastGeneratedKeys = [createdKey];
-        els.licenseKey.value = createdKey;
+        setStatus("Đang tạo license...");
+        els.licenseKey.value = payload.id;
+        await saveNewLicenseDocument(payload.id, payload.data);
+        selectedLicenseId = payload.id;
+        lastGeneratedKeys = [payload.id];
         setStatus("Đã tạo license.");
     } catch (error) {
         setStatus(error.message, true);
     }
+});
+
+els.generateKeyBtn.addEventListener("click", () => {
+    selectedLicenseId = "";
+    lastGeneratedKeys = [];
+    els.licenseKey.value = generateLicenseKey();
+    renderLicenses();
+    setStatus("Đã sinh license key. Kiểm tra thông tin rồi bấm Tạo.");
+});
+
+els.licenseKey.addEventListener("input", () => {
+    selectedLicenseId = "";
+    lastGeneratedKeys = [];
+    els.licenseKey.value = normalizeLicenseKey(els.licenseKey.value);
+    renderLicenses();
 });
 
 els.copyLicensesBtn.addEventListener("click", async () => {
@@ -380,7 +426,7 @@ els.copyLicensesBtn.addEventListener("click", async () => {
     }
 
     try {
-        await navigator.clipboard.writeText(value);
+        await copyText(value);
         setStatus("Đã copy license key.");
     } catch (error) {
         els.licenseKey.focus();
@@ -389,15 +435,42 @@ els.copyLicensesBtn.addEventListener("click", async () => {
     }
 });
 
-els.licenseRows.addEventListener("click", (event) => {
+els.licenseRows.addEventListener("click", async (event) => {
+    const copyTarget = event.target.closest("[data-copy-license-key]");
     const row = event.target.closest("[data-license-id]");
     const license = row ? licenses.find((item) => item.id === row.getAttribute("data-license-id")) : null;
+
+    if (copyTarget) {
+        const key = copyTarget.getAttribute("data-copy-license-key");
+        if (license) {
+            selectedLicenseId = license.id;
+            renderLicenses();
+        }
+        try {
+            await copyText(key);
+            setStatus("Đã copy license key.");
+        } catch (error) {
+            setStatus("Không copy tự động được. Hãy copy thủ công.", true);
+        }
+        return;
+    }
+
     if (license) {
-        fillForm(license);
+        selectedLicenseId = license.id;
+        lastGeneratedKeys = [];
+        renderLicenses();
     }
 });
 
 els.searchInput.addEventListener("input", renderLicenses);
+
+els.createTabBtn.addEventListener("click", () => {
+    setActiveWorkspaceTab("create");
+});
+
+els.listTabBtn.addEventListener("click", () => {
+    setActiveWorkspaceTab("list");
+});
 
 els.productId.addEventListener("change", () => {
     selectedLicenseId = "";
@@ -423,6 +496,7 @@ function showAdmin(user) {
     els.accessPanel.hidden = true;
     els.adminPanel.hidden = false;
     clearForm();
+    setActiveWorkspaceTab("create");
     subscribeLicenses();
 }
 
