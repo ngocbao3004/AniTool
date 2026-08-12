@@ -21,10 +21,9 @@
     <nav class="nav" data-nav aria-label="Main navigation">
       <a href="#products" data-i18n="nav.products">Products</a>
       <a href="#platforms" data-i18n="nav.platforms">Platforms</a>
-      <a href="#roadmap" data-i18n="nav.roadmap">Roadmap</a>
       <a href="#pricing" data-i18n="nav.pricing">Pricing</a>
-      <a href="#account" data-i18n="nav.account">Account</a>
-      <a class="navCta" href="mailto:sales@anitool.local?subject=AniTool%20Early%20Access" data-i18n="nav.cta">Early access</a>
+      <a href="#roadmap" data-i18n="nav.roadmap">Roadmap</a>
+      <a class="navCta loginCta" href="#account"><i class="fa-solid fa-user" aria-hidden="true"></i><span data-i18n="nav.login">Login</span></a>
     </nav>
     <div class="siteControls" aria-label="Site settings">
       <div class="segmentedControl" role="group" aria-label="Language">
@@ -47,8 +46,8 @@
           <h1 id="heroTitle" data-i18n="hero.title">AniTool builds focused tools for motion designers.</h1>
           <p class="heroCopy" data-i18n="hero.copy">A growing product family for After Effects and production workflow. Small tools, clear jobs, faster animation days.</p>
           <div class="heroActions" aria-label="Primary actions">
-            <a class="button primary" href="#products" data-i18n="hero.primary">Browse products</a>
-            <a class="button secondary" href="#roadmap" data-i18n="hero.secondary">View roadmap</a>
+            <a class="button primary" href="#account" data-i18n="hero.primary">Login / Register</a>
+            <a class="button secondary" href="#products" data-i18n="hero.secondary">Browse products</a>
           </div>
         </div>
         <aside class="heroShelf" aria-label="AniTool product shelf">
@@ -141,39 +140,6 @@
       </div>
     </section>
 
-    <section class="section detailBand" id="pricing" aria-labelledby="detailTitle">
-      <div class="sectionInner detailLayout">
-        <div class="productPreview" aria-hidden="true"></div>
-        <div class="detailCopy">
-          <p class="eyebrow" data-i18n="detail.eyebrow">Featured product</p>
-          <h2 id="detailTitle">AniDeepth</h2>
-          <p data-i18n="detail.copy">The first AniTool product focuses on depth layout for After Effects. It helps animators move 3D layers while preserving the visual size they already composed.</p>
-          <div class="detailStats">
-            <div><span data-i18n="detail.priceLabel">Early access</span><strong data-price data-usd="29" data-vnd="690000">$29</strong></div>
-            <div><span data-i18n="detail.platformLabel">Platform</span><strong>After Effects</strong></div>
-          </div>
-          <div class="heroActions">
-            <a class="button primary" href="mailto:sales@anitool.local?subject=AniDeepth%20Creator%20License" data-i18n="detail.buy">Buy AniDeepth</a>
-            <a class="button secondary" href="mailto:sales@anitool.local?subject=AniTool%20Product%20Question" data-i18n="detail.contact">Ask about products</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section roadmapSection" id="roadmap" aria-labelledby="roadmapTitle">
-      <div class="sectionInner roadmapLayout">
-        <div>
-          <p class="eyebrow" data-i18n="roadmap.eyebrow">Roadmap</p>
-          <h2 id="roadmapTitle" data-i18n="roadmap.title">The site can grow product by product.</h2>
-        </div>
-        <div class="roadmapList">
-          <article><span>01</span><h3 data-i18n="roadmap.step1.title">Release AniDeepth</h3><p data-i18n="roadmap.step1.copy">Stabilize license, docs, installer, and sales flow for the first product.</p></article>
-          <article><span>02</span><h3 data-i18n="roadmap.step2.title">Add product pages</h3><p data-i18n="roadmap.step2.copy">Each new product gets its own card, detail page, pricing, and download path.</p></article>
-          <article><span>03</span><h3 data-i18n="roadmap.step3.title">Connect CMS</h3><p data-i18n="roadmap.step3.copy">Use the CMS for license control, product status, customers, and release notes.</p></article>
-        </div>
-      </div>
-    </section>
-
     <section class="section accountSection" id="account" aria-labelledby="accountTitle">
       <div class="sectionInner accountLayout">
         <div class="accountLead">
@@ -209,6 +175,41 @@
         </div>
       </div>
     </section>
+
+    <section class="section detailBand" id="pricing" aria-labelledby="detailTitle">
+      <div class="sectionInner detailLayout">
+        <div class="productPreview" aria-hidden="true"></div>
+        <div class="detailCopy">
+          <p class="eyebrow" data-i18n="detail.eyebrow">Featured product</p>
+          <h2 id="detailTitle">AniDeepth</h2>
+          <p data-i18n="detail.copy">The first AniTool product focuses on depth layout for After Effects. It helps animators move 3D layers while preserving the visual size they already composed.</p>
+          <div class="detailStats">
+            <div><span data-i18n="detail.priceLabel">Creator license</span><strong data-price data-usd="29" data-vnd="690000">$29</strong></div>
+            <div><span data-i18n="detail.platformLabel">Platform</span><strong>After Effects</strong></div>
+          </div>
+          <div class="heroActions">
+            <a class="button primary" href="mailto:sales@anitool.local?subject=AniDeepth%20Creator%20License" data-i18n="detail.buy">Buy AniDeepth</a>
+            <a class="button secondary" href="mailto:sales@anitool.local?subject=AniTool%20Product%20Question" data-i18n="detail.contact">Ask about products</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section roadmapSection" id="roadmap" aria-labelledby="roadmapTitle">
+      <div class="sectionInner roadmapLayout">
+        <div>
+          <p class="eyebrow" data-i18n="roadmap.eyebrow">Roadmap</p>
+          <h2 id="roadmapTitle" data-i18n="roadmap.title">The site can grow product by product.</h2>
+        </div>
+        <div class="roadmapList">
+          <article><span>01</span><h3 data-i18n="roadmap.step1.title">Release AniDeepth</h3><p data-i18n="roadmap.step1.copy">Stabilize license, docs, installer, and sales flow for the first product.</p></article>
+          <article><span>02</span><h3 data-i18n="roadmap.step2.title">Add product pages</h3><p data-i18n="roadmap.step2.copy">Each new product gets its own card, detail page, pricing, and download path.</p></article>
+          <article><span>03</span><h3 data-i18n="roadmap.step3.title">Connect CMS</h3><p data-i18n="roadmap.step3.copy">Use the CMS for license control, product status, customers, and release notes.</p></article>
+        </div>
+      </div>
+    </section>
+
+
   </main>
 
   <footer class="footer">

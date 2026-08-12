@@ -29,15 +29,14 @@ const translations = {
     "nav.platforms": "Platforms",
     "nav.roadmap": "Roadmap",
     "nav.pricing": "Pricing",
-    "nav.cta": "Early access",
-    "nav.account": "Account",
+    "nav.login": "Login",
     "theme.dark": "Dark mode",
     "theme.light": "Light mode",
     "hero.eyebrow": "Animation product hub",
     "hero.title": "AniTool builds focused tools for motion designers.",
     "hero.copy": "A growing product family for After Effects and production workflow. Small tools, clear jobs, faster animation days.",
-    "hero.primary": "Browse products",
-    "hero.secondary": "View roadmap",
+    "hero.primary": "Login / Register",
+    "hero.secondary": "Browse products",
     "shelf.label": "Product shelf",
     "shelf.count": "3 products planned",
     "shelf.deepth": "Depth layout for After Effects",
@@ -67,7 +66,7 @@ const translations = {
     "platforms.ai": "Future lane.",
     "detail.eyebrow": "Featured product",
     "detail.copy": "The first AniTool product focuses on depth layout for After Effects. It helps animators move 3D layers while preserving the visual size they already composed.",
-    "detail.priceLabel": "Early access",
+    "detail.priceLabel": "Creator license",
     "detail.platformLabel": "Platform",
     "detail.buy": "Buy AniDeepth",
     "detail.contact": "Ask about products",
@@ -103,15 +102,14 @@ const translations = {
     "nav.platforms": "N\u1ec1n t\u1ea3ng",
     "nav.roadmap": "L\u1ed9 tr\u00ecnh",
     "nav.pricing": "Gi\u00e1",
-    "nav.cta": "Early access",
-    "nav.account": "T\u00e0i kho\u1ea3n",
+    "nav.login": "\u0110\u0103ng nh\u1eadp",
     "theme.dark": "Ch\u1ebf \u0111\u1ed9 t\u1ed1i",
     "theme.light": "Ch\u1ebf \u0111\u1ed9 s\u00e1ng",
     "hero.eyebrow": "Hub s\u1ea3n ph\u1ea9m animation",
     "hero.title": "AniTool x\u00e2y c\u00e1c c\u00f4ng c\u1ee5 t\u1eadp trung cho motion designer.",
     "hero.copy": "M\u1ed9t d\u00f2ng s\u1ea3n ph\u1ea9m \u0111ang ph\u00e1t tri\u1ec3n cho After Effects v\u00e0 production workflow. C\u00f4ng c\u1ee5 nh\u1ecf, vi\u1ec7c r\u00f5, ng\u00e0y l\u00e0m animation nhanh h\u01a1n.",
-    "hero.primary": "Xem s\u1ea3n ph\u1ea9m",
-    "hero.secondary": "Xem l\u1ed9 tr\u00ecnh",
+    "hero.primary": "\u0110\u0103ng nh\u1eadp / \u0110\u0103ng k\u00fd",
+    "hero.secondary": "Xem s\u1ea3n ph\u1ea9m",
     "shelf.label": "K\u1ec7 s\u1ea3n ph\u1ea9m",
     "shelf.count": "3 s\u1ea3n ph\u1ea9m d\u1ef1 ki\u1ebfn",
     "shelf.deepth": "D\u1ef1ng depth cho After Effects",
@@ -141,7 +139,7 @@ const translations = {
     "platforms.ai": "Nh\u00e1nh t\u01b0\u01a1ng lai.",
     "detail.eyebrow": "S\u1ea3n ph\u1ea9m n\u1ed5i b\u1eadt",
     "detail.copy": "S\u1ea3n ph\u1ea9m \u0111\u1ea7u ti\u00ean c\u1ee7a AniTool t\u1eadp trung v\u00e0o depth layout cho After Effects. N\u00f3 gi\u00fap animator \u0111\u1ea9y layer 3D m\u00e0 v\u1eabn gi\u1eef k\u00edch th\u01b0\u1edbc th\u1ecb gi\u00e1c \u0111\u00e3 c\u0103n.",
-    "detail.priceLabel": "Early access",
+    "detail.priceLabel": "License",
     "detail.platformLabel": "N\u1ec1n t\u1ea3ng",
     "detail.buy": "Mua AniDeepth",
     "detail.contact": "H\u1ecfi v\u1ec1 s\u1ea3n ph\u1ea9m",
@@ -398,7 +396,8 @@ onAuthStateChanged(siteAuth, async (user) => {
     console.warn(error);
   }
   showUserAccount(user);
-});themeToggle.addEventListener("click", () => {
+});
+themeToggle.addEventListener("click", () => {
   state.theme = state.theme === "dark" ? "light" : "dark";
   applyTheme();
 });
