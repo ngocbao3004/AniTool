@@ -402,8 +402,8 @@ code {
 
 .workspaceTabs {
     display: inline-grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: min(460px, 100%);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(620px, 100%);
     gap: 4px;
     margin-top: 16px;
     border-radius: var(--radius-outer);
@@ -546,6 +546,39 @@ label span {
 
 .wide {
     grid-column: 1 / -1;
+}
+
+.releaseAvailability {
+    display: flex;
+    min-height: 40px;
+    flex-direction: row;
+    align-items: center;
+    gap: 9px;
+    align-self: end;
+    padding: 0 3px;
+}
+
+.releaseAvailability input {
+    width: 17px;
+    height: 17px;
+    flex: none;
+    accent-color: var(--accent);
+}
+
+.releaseAvailability span {
+    color: var(--text);
+    font-size: inherit;
+    text-transform: none;
+}
+
+.releaseActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.releaseActions .primaryButton {
+    margin-left: auto;
 }
 
 input,
@@ -1121,6 +1154,15 @@ tbody tr.isSelected td {
 
     .licenseKeyActions {
         grid-template-columns: 1fr;
+    }
+
+    .releaseActions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .releaseActions .primaryButton {
+        margin-left: 0;
     }
 
     .workspaceTabs {

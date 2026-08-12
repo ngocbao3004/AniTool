@@ -90,8 +90,21 @@ const els = {
     bulkAddDays: document.getElementById("bulkAddDays"),
     createTabBtn: document.getElementById("createTabBtn"),
     listTabBtn: document.getElementById("listTabBtn"),
+    distributionTabBtn: document.getElementById("distributionTabBtn"),
     createTabPanel: document.getElementById("createTabPanel"),
-    listTabPanel: document.getElementById("listTabPanel")
+    listTabPanel: document.getElementById("listTabPanel"),
+    distributionTabPanel: document.getElementById("distributionTabPanel"),
+    releaseForm: document.getElementById("releaseForm"),
+    releaseProductId: document.getElementById("releaseProductId"),
+    releaseVersion: document.getElementById("releaseVersion"),
+    releasePrimaryUrl: document.getElementById("releasePrimaryUrl"),
+    releaseBackupUrl: document.getElementById("releaseBackupUrl"),
+    releaseDeliveryMode: document.getElementById("releaseDeliveryMode"),
+    releaseAvailable: document.getElementById("releaseAvailable"),
+    releaseNotes: document.getElementById("releaseNotes"),
+    testPrimaryUrlBtn: document.getElementById("testPrimaryUrlBtn"),
+    testBackupUrlBtn: document.getElementById("testBackupUrlBtn"),
+    saveReleaseBtn: document.getElementById("saveReleaseBtn")
 };
 
 let licenses = [];
@@ -105,6 +118,7 @@ let sortState = {
     key: "createdAt",
     direction: "desc"
 };
+let releaseLoadSequence = 0;
 
 const MIN_DURATION_DAYS = 1;
 const MAX_DURATION_DAYS = 36500;
@@ -573,6 +587,129 @@ function clearForm() {
     renderLicenses();
 }
 
+function populateReleaseProducts() {
+    els.releaseProductId.innerHTML = Object.entries(products)
+        .map(([id, product]) => `<option value="${escapeHtml(id)}">${escapeHtml(product.name)}</option>`)
+        .join("");
+    els.releaseProductId.value = "ani-deepth";
+}
+
+function normalizeReleaseUrl(value, label) {
+    const normalized = String(value || "").trim();
+    if (!normalized) {
+        return "";
+    }
+
+    try {
+        const url = new URL(normalized);
+        if (url.protocol !== "https:") {
+            throw new Error();
+        }
+        return url.toString();
+    } catch {
+        throw new Error(`${label} phải là đường dẫn https hợp lệ.`);
+    }
+}
+
+function setReleaseFormBusy(isBusy) {
+    [
+        els.releaseProductId,
+        els.releaseVersion,
+        els.releasePrimaryUrl,
+        els.releaseBackupUrl,
+        els.releaseDeliveryMode,
+        els.releaseAvailable,
+        els.releaseNotes,
+        els.testPrimaryUrlBtn,
+        els.testBackupUrlBtn,
+        els.saveReleaseBtn
+    ].forEach((element) => {
+        element.disabled = isBusy;
+    });
+}
+
+function clearReleaseForm() {
+    els.releaseVersion.value = "";
+    els.releasePrimaryUrl.value = "";
+    els.releaseBackupUrl.value = "";
+    els.releaseDeliveryMode.value = "direct";
+    els.releaseAvailable.checked = false;
+    els.releaseNotes.value = "";
+}
+
+async function loadProductRelease() {
+    const productId = els.releaseProductId.value;
+    const sequence = ++releaseLoadSequence;
+    setReleaseFormBusy(true);
+
+    try {
+        const snapshot = await getDoc(doc(db, "productReleases", productId));
+        if (sequence !== releaseLoadSequence) {
+            return;
+        }
+
+        clearReleaseForm();
+        if (!snapshot.exists()) {
+            setStatus(`${getProductName(productId)} chưa có bản phát hành.`);
+            return;
+        }
+
+        const release = snapshot.data();
+        els.releaseVersion.value = release.version || "";
+        els.releasePrimaryUrl.value = release.primaryUrl || "";
+        els.releaseBackupUrl.value = release.backupUrl || "";
+        els.releaseDeliveryMode.value = release.deliveryMode === "web" ? "web" : "direct";
+        els.releaseAvailable.checked = release.available === true;
+        els.releaseNotes.value = release.notes || "";
+        setStatus(`Đã tải thông tin phát hành ${getProductName(productId)}.`);
+    } catch (error) {
+        setStatus(error.message, true);
+    } finally {
+        if (sequence === releaseLoadSequence) {
+            setReleaseFormBusy(false);
+        }
+    }
+}
+
+async function saveProductRelease() {
+    const productId = els.releaseProductId.value;
+    const primaryUrl = normalizeReleaseUrl(els.releasePrimaryUrl.value, "Link chính");
+    const backupUrl = normalizeReleaseUrl(els.releaseBackupUrl.value, "Link dự phòng");
+
+    if (els.releaseAvailable.checked && !primaryUrl && !backupUrl) {
+        throw new Error("Cần ít nhất một link trước khi cho phép phát hành.");
+    }
+
+    setReleaseFormBusy(true);
+    try {
+        await setDoc(doc(db, "productReleases", productId), {
+            productId,
+            productName: getProductName(productId),
+            software: getProductSoftware(productId),
+            version: String(els.releaseVersion.value || "").trim(),
+            primaryUrl,
+            backupUrl,
+            deliveryMode: els.releaseDeliveryMode.value === "web" ? "web" : "direct",
+            available: els.releaseAvailable.checked,
+            notes: String(els.releaseNotes.value || "").trim(),
+            updatedBy: auth.currentUser ? auth.currentUser.uid : "",
+            updatedByEmail: auth.currentUser ? auth.currentUser.email || "" : "",
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        setStatus(`Đã lưu bản phát hành ${getProductName(productId)}.`);
+    } finally {
+        setReleaseFormBusy(false);
+    }
+}
+
+function openReleaseUrl(input, label) {
+    const url = normalizeReleaseUrl(input.value, label);
+    if (!url) {
+        throw new Error(`${label} đang trống.`);
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+}
+
 function getFormPayload() {
     const email = String(els.licenseEmail.value || "").trim().toLowerCase();
     const contactInfo = String(els.contactInfo.value || "").trim();
@@ -1036,14 +1173,23 @@ function renderLicenses() {
 }
 
 function setActiveWorkspaceTab(name) {
-    const showCreate = name !== "list";
+    const activeName = name === "list" || name === "distribution" ? name : "create";
+    const tabs = [
+        { name: "create", button: els.createTabBtn, panel: els.createTabPanel },
+        { name: "list", button: els.listTabBtn, panel: els.listTabPanel },
+        { name: "distribution", button: els.distributionTabBtn, panel: els.distributionTabPanel }
+    ];
 
-    els.createTabBtn.classList.toggle("isActive", showCreate);
-    els.listTabBtn.classList.toggle("isActive", !showCreate);
-    els.createTabBtn.setAttribute("aria-selected", showCreate ? "true" : "false");
-    els.listTabBtn.setAttribute("aria-selected", showCreate ? "false" : "true");
-    els.createTabPanel.hidden = !showCreate;
-    els.listTabPanel.hidden = showCreate;
+    tabs.forEach((tab) => {
+        const isActive = tab.name === activeName;
+        tab.button.classList.toggle("isActive", isActive);
+        tab.button.setAttribute("aria-selected", isActive ? "true" : "false");
+        tab.panel.hidden = !isActive;
+    });
+
+    if (activeName === "distribution") {
+        loadProductRelease();
+    }
 }
 
 function getAdminSetupMessage(user) {
@@ -1423,6 +1569,37 @@ els.listTabBtn.addEventListener("click", () => {
     setActiveWorkspaceTab("list");
 });
 
+els.distributionTabBtn.addEventListener("click", () => {
+    setActiveWorkspaceTab("distribution");
+});
+
+els.releaseProductId.addEventListener("change", loadProductRelease);
+
+els.releaseForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+        await saveProductRelease();
+    } catch (error) {
+        setStatus(error.message, true);
+    }
+});
+
+els.testPrimaryUrlBtn.addEventListener("click", () => {
+    try {
+        openReleaseUrl(els.releasePrimaryUrl, "Link chính");
+    } catch (error) {
+        setStatus(error.message, true);
+    }
+});
+
+els.testBackupUrlBtn.addEventListener("click", () => {
+    try {
+        openReleaseUrl(els.releaseBackupUrl, "Link dự phòng");
+    } catch (error) {
+        setStatus(error.message, true);
+    }
+});
+
 document.addEventListener("click", (event) => {
     if (!event.target.closest(".smartSelect")) {
         closeDropdown();
@@ -1475,6 +1652,7 @@ function showAccessDenied(user, error) {
 
 updateProductSelectText();
 renderProductOptions();
+populateReleaseProducts();
 renderFilterOptions(els.softwareOptionList, softwareFilterOptions, els.softwareFilter.value);
 renderFilterOptions(els.statusOptionList, statusFilterOptions, els.statusFilter.value);
 renderBulkStatusOptions();

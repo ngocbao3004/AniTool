@@ -107,6 +107,7 @@
             <div class="workspaceTabs" role="tablist" aria-label="License workspace">
                 <button id="createTabBtn" class="workspaceTab isActive" type="button" role="tab" aria-selected="true" aria-controls="createTabPanel">Tạo license</button>
                 <button id="listTabBtn" class="workspaceTab" type="button" role="tab" aria-selected="false" aria-controls="listTabPanel">Danh sách</button>
+                <button id="distributionTabBtn" class="workspaceTab" type="button" role="tab" aria-selected="false" aria-controls="distributionTabPanel">Phân phối</button>
             </div>
 
             <div class="workspacePanels">
@@ -227,6 +228,47 @@
                             </tbody>
                         </table>
                     </div>
+                </section>
+
+                <section id="distributionTabPanel" class="panel distributionPanel tabPanel" role="tabpanel" aria-labelledby="distributionTabBtn" hidden>
+                    <form id="releaseForm" class="formGrid releaseForm">
+                        <label>
+                            <span>Sản phẩm</span>
+                            <select id="releaseProductId"></select>
+                        </label>
+                        <label>
+                            <span>Phiên bản</span>
+                            <input id="releaseVersion" type="text" maxlength="40" autocomplete="off" placeholder="1.0.0">
+                        </label>
+                        <label class="wide">
+                            <span>Link chính</span>
+                            <input id="releasePrimaryUrl" type="url" autocomplete="off" placeholder="https://...">
+                        </label>
+                        <label class="wide">
+                            <span>Link dự phòng</span>
+                            <input id="releaseBackupUrl" type="url" autocomplete="off" placeholder="https://...">
+                        </label>
+                        <label>
+                            <span>Cách mở</span>
+                            <select id="releaseDeliveryMode">
+                                <option value="direct">Tải trực tiếp</option>
+                                <option value="web">Mở trang web</option>
+                            </select>
+                        </label>
+                        <label class="releaseAvailability">
+                            <input id="releaseAvailable" type="checkbox">
+                            <span>Cho phép phát hành</span>
+                        </label>
+                        <label class="wide">
+                            <span>Ghi chú cho người dùng</span>
+                            <textarea id="releaseNotes" maxlength="500" rows="3" placeholder="Nội dung ngắn hiển thị trong Manager"></textarea>
+                        </label>
+                        <div class="releaseActions wide">
+                            <button id="testPrimaryUrlBtn" type="button">Mở link chính</button>
+                            <button id="testBackupUrlBtn" type="button">Mở link dự phòng</button>
+                            <button id="saveReleaseBtn" class="primaryButton" type="submit">Lưu phát hành</button>
+                        </div>
+                    </form>
                 </section>
             </div>
         </section>

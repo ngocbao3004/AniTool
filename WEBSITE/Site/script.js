@@ -287,6 +287,8 @@ const deviceApproval = document.querySelector("[data-device-approval]");
 const deviceApproveButton = document.querySelector("[data-device-approve]");
 const deviceApprovalStatus = document.querySelector("[data-device-approval-status]");
 const deviceApprovalTitle = document.querySelector("[data-device-approval-title]");
+const deviceApprovalCopy = document.querySelector("[data-device-approval-copy]");
+const deviceApproveLabel = document.querySelector("[data-device-approve-label]");
 let customerLicenses = [];
 let customerLicenseUnsubscribe = null;
 let currentUser = null;
@@ -295,6 +297,8 @@ let signedUiUserId = "";
 const activationUrl = new URL(window.location.href);
 const activationTokenFromUrl = activationUrl.searchParams.get("device_activation") || "";
 const isValidActivationToken = activationTokenFromUrl.length >= 100 && activationTokenFromUrl.length <= 4096;
+const managerAuthorizationFromUrl = activationUrl.searchParams.get("manager_authorization") || "";
+const isValidManagerAuthorization = managerAuthorizationFromUrl.length >= 100 && managerAuthorizationFromUrl.length <= 4096;
 const productIdFromUrl = /^[a-z0-9-]{3,64}$/.test(activationUrl.searchParams.get("product") || "")
   ? activationUrl.searchParams.get("product")
   : "";
@@ -307,10 +311,21 @@ if (isValidActivationToken) {
   window.history.replaceState(null, "", `${activationUrl.pathname}${activationUrl.search}${activationUrl.hash}`);
 }
 
+if (isValidManagerAuthorization) {
+  sessionStorage.setItem("anitool.managerAuthorization", managerAuthorizationFromUrl);
+  activationUrl.searchParams.delete("manager_authorization");
+  window.history.replaceState(null, "", `${activationUrl.pathname}${activationUrl.search}${activationUrl.hash}`);
+}
+
 const deviceActivationToken = isValidActivationToken
   ? activationTokenFromUrl
   : (sessionStorage.getItem("anitool.deviceActivation") || "");
 const deviceProductId = productIdFromUrl || sessionStorage.getItem("anitool.deviceProduct") || "";
+const managerAuthorizationToken = isValidManagerAuthorization
+  ? managerAuthorizationFromUrl
+  : (sessionStorage.getItem("anitool.managerAuthorization") || "");
+const pendingAuthorizationToken = managerAuthorizationToken || deviceActivationToken;
+const isManagerAuthorization = Boolean(managerAuthorizationToken);
 
 function t(key) {
   const dictionary = translations[state.lang] || translations.en;
@@ -409,48 +424,80 @@ function setDeviceApprovalStatus(message = "", isError = false) {
 }
 
 function syncDeviceApprovalUi(user) {
-  if (!deviceApproval || !deviceActivationToken) return;
+  if (!deviceApproval || !pendingAuthorizationToken) return;
   deviceApproval.hidden = false;
-  if (deviceApprovalTitle) {
+  if (isManagerAuthorization) {
+    if (deviceApprovalTitle) {
+      deviceApprovalTitle.textContent = state.lang === "vi"
+        ? "\u0110\u0103ng nh\u1eadp AniTool Manager tr\u00ean m\u00e1y t\u00ednh n\u00e0y"
+        : "Sign in to AniTool Manager on this computer";
+    }
+    if (deviceApprovalCopy) {
+      deviceApprovalCopy.textContent = state.lang === "vi"
+        ? "D\u00f9ng t\u00e0i kho\u1ea3n Google c\u1ee7a b\u1ea1n, sau \u0111\u00f3 x\u00e1c nh\u1eadn \u0111\u1ec3 Manager t\u1ea3i danh s\u00e1ch s\u1ea3n ph\u1ea9m c\u00e1 nh\u00e2n."
+        : "Use your Google account, then approve Manager to load your personal products.";
+    }
+    if (deviceApproveLabel) {
+      deviceApproveLabel.textContent = state.lang === "vi" ? "X\u00e1c nh\u1eadn Manager" : "Approve Manager";
+    }
+  } else if (deviceApprovalTitle) {
     const productName = getProductName(deviceProductId || "ani-deepth");
     deviceApprovalTitle.textContent = state.lang === "vi"
       ? `X\u00e1c nh\u1eadn ${productName} tr\u00ean m\u00e1y t\u00ednh n\u00e0y`
       : `Approve ${productName} on this computer`;
+    if (deviceApprovalCopy) deviceApprovalCopy.textContent = t("device.copy");
+    if (deviceApproveLabel) deviceApproveLabel.textContent = t("device.approve");
   }
   if (deviceApproveButton) deviceApproveButton.disabled = !user;
   setDeviceApprovalStatus(user
-    ? t("device.ready")
-    : t("device.signIn"));
+    ? (isManagerAuthorization
+      ? (state.lang === "vi" ? "S\u1eb5n s\u00e0ng x\u00e1c nh\u1eadn Manager." : "Ready to approve Manager.")
+      : t("device.ready"))
+    : (isManagerAuthorization
+      ? (state.lang === "vi" ? "\u0110\u0103ng nh\u1eadp Google b\u00ean d\u01b0\u1edbi \u0111\u1ec3 ti\u1ebfp t\u1ee5c." : "Sign in with Google below to continue.")
+      : t("device.signIn")));
 }
 
 function clearDeviceActivationFromBrowser() {
   sessionStorage.removeItem("anitool.deviceActivation");
   sessionStorage.removeItem("anitool.deviceProduct");
+  sessionStorage.removeItem("anitool.managerAuthorization");
   const cleanUrl = new URL(window.location.href);
   cleanUrl.searchParams.delete("device_activation");
+  cleanUrl.searchParams.delete("manager_authorization");
   window.history.replaceState(null, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
 }
 
 async function approveDeviceActivation() {
-  if (!currentUser || !deviceActivationToken || !deviceApproveButton) return;
+  if (!currentUser || !pendingAuthorizationToken || !deviceApproveButton) return;
   try {
     deviceApproveButton.disabled = true;
-    setDeviceApprovalStatus(t("device.approving"));
+    setDeviceApprovalStatus(isManagerAuthorization
+      ? (state.lang === "vi" ? "\u0110ang x\u00e1c nh\u1eadn AniTool Manager..." : "Approving AniTool Manager...")
+      : t("device.approving"));
     const idToken = await getIdToken(currentUser, true);
-    const response = await fetch(`${LICENSE_API_URL}/v1/device-authorizations/approve`, {
+    const response = await fetch(`${LICENSE_API_URL}${isManagerAuthorization
+      ? "/v1/manager-authorizations/approve"
+      : "/v1/device-authorizations/approve"}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${idToken}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ activationToken: deviceActivationToken })
+      body: JSON.stringify(isManagerAuthorization
+        ? { authorizationToken: managerAuthorizationToken }
+        : { activationToken: deviceActivationToken })
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || !payload?.data?.approved) {
       throw new Error(payload?.error?.message || t("device.failure"));
     }
     clearDeviceActivationFromBrowser();
-    setDeviceApprovalStatus(t("device.success"));
+    setDeviceApprovalStatus(isManagerAuthorization
+      ? (state.lang === "vi"
+        ? "\u0110\u00e3 x\u00e1c nh\u1eadn. Quay l\u1ea1i AniTool Manager; \u0111\u0103ng nh\u1eadp s\u1ebd t\u1ef1 ho\u00e0n t\u1ea5t."
+        : "Approved. Return to AniTool Manager; sign-in will finish automatically.")
+      : t("device.success"));
     deviceApproveButton.hidden = true;
   } catch (error) {
     setDeviceApprovalStatus(error?.message || t("device.failure"), true);
