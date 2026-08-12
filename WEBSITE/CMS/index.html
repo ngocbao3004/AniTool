@@ -105,23 +105,15 @@
                         <label class="wide">
                             <span>Sản phẩm</span>
                             <input id="productId" type="hidden" value="ani-deepth">
-                            <div id="productPicker" class="productPicker" role="radiogroup" aria-label="Sản phẩm">
-                                <button class="productChoice isActive" type="button" data-product-id="ani-deepth" aria-pressed="true">
-                                    <strong>AniDeepth</strong>
-                                    <span>After Effects</span>
+                            <div id="productDropdown" class="smartSelect">
+                                <button id="productSelectBtn" class="smartSelectButton" type="button" aria-expanded="false">
+                                    <span id="productSelectText">AniDeepth</span>
+                                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
                                 </button>
-                                <button class="productChoice" type="button" data-product-id="ani-layout" aria-pressed="false">
-                                    <strong>Ani Layout</strong>
-                                    <span>Illustrator</span>
-                                </button>
-                                <button class="productChoice" type="button" data-product-id="ani-anim" aria-pressed="false">
-                                    <strong>Ani Anim</strong>
-                                    <span>Autodesk Maya</span>
-                                </button>
-                                <button class="productChoice" type="button" data-product-id="ani-voice-check" aria-pressed="false">
-                                    <strong>Ani Voice Check</strong>
-                                    <span>Windows</span>
-                                </button>
+                                <div id="productSelectMenu" class="smartSelectMenu" hidden>
+                                    <input id="productSearchInput" class="smartSelectSearch" type="search" placeholder="Tìm sản phẩm hoặc phần mềm">
+                                    <div id="productOptionList" class="smartOptionList"></div>
+                                </div>
                             </div>
                         </label>
                         <label>
@@ -161,34 +153,39 @@
                         </div>
                         <div class="listTools">
                             <input id="searchInput" type="search" placeholder="Tìm key, email, liên hệ, sản phẩm">
-                            <select id="softwareFilter" aria-label="Lọc theo phần mềm">
-                                <option value="all">Tất cả phần mềm</option>
-                                <option value="after-effects">After Effects</option>
-                                <option value="illustrator">Illustrator</option>
-                                <option value="maya">Autodesk Maya</option>
-                                <option value="windows">Windows</option>
-                            </select>
-                            <select id="statusFilter" aria-label="Lọc theo tình trạng">
-                                <option value="all">Tất cả tình trạng</option>
-                                <option value="available">Chưa kích hoạt</option>
-                                <option value="active">Đang dùng</option>
-                                <option value="expiring">Sắp hết hạn</option>
-                                <option value="expired">Đã quá hạn</option>
-                                <option value="blocked">Đã khóa</option>
-                            </select>
+                            <input id="softwareFilter" type="hidden" value="all">
+                            <div id="softwareDropdown" class="smartSelect smartSelectCompact">
+                                <button id="softwareSelectBtn" class="smartSelectButton" type="button" aria-expanded="false">
+                                    <span id="softwareSelectText">Tất cả phần mềm</span>
+                                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                                </button>
+                                <div id="softwareSelectMenu" class="smartSelectMenu" hidden>
+                                    <div id="softwareOptionList" class="smartOptionList"></div>
+                                </div>
+                            </div>
+                            <input id="statusFilter" type="hidden" value="all">
+                            <div id="statusDropdown" class="smartSelect smartSelectCompact">
+                                <button id="statusSelectBtn" class="smartSelectButton" type="button" aria-expanded="false">
+                                    <span id="statusSelectText">Tất cả tình trạng</span>
+                                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                                </button>
+                                <div id="statusSelectMenu" class="smartSelectMenu" hidden>
+                                    <div id="statusOptionList" class="smartOptionList"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="tableWrap">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Key</th>
-                                    <th>Sản phẩm</th>
-                                    <th>Trạng thái</th>
-                                    <th>Ngày</th>
-                                    <th>Máy</th>
-                                    <th>Gmail</th>
-                                    <th>Liên hệ</th>
+                                    <th><button class="sortHeader" type="button" data-sort-key="key">Key <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
+                                    <th><button class="sortHeader" type="button" data-sort-key="product">Sản phẩm <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
+                                    <th><button class="sortHeader" type="button" data-sort-key="status">Trạng thái <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
+                                    <th><button class="sortHeader" type="button" data-sort-key="days">Ngày <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
+                                    <th><button class="sortHeader" type="button" data-sort-key="devices">Máy <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
+                                    <th><button class="sortHeader" type="button" data-sort-key="email">Gmail <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
+                                    <th><button class="sortHeader" type="button" data-sort-key="contact">Liên hệ <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th>
                                 </tr>
                             </thead>
                             <tbody id="licenseRows">

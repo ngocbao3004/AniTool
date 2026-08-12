@@ -47,7 +47,11 @@ const els = {
     licenseEmail: document.getElementById("licenseEmail"),
     contactInfo: document.getElementById("contactInfo"),
     productId: document.getElementById("productId"),
-    productPicker: document.getElementById("productPicker"),
+    productSelectBtn: document.getElementById("productSelectBtn"),
+    productSelectText: document.getElementById("productSelectText"),
+    productSelectMenu: document.getElementById("productSelectMenu"),
+    productSearchInput: document.getElementById("productSearchInput"),
+    productOptionList: document.getElementById("productOptionList"),
     durationDays: document.getElementById("durationDays"),
     maxDevices: document.getElementById("maxDevices"),
     copyLicensesBtn: document.getElementById("copyLicensesBtn"),
@@ -55,7 +59,15 @@ const els = {
     createLicenseBtn: document.getElementById("createLicenseBtn"),
     searchInput: document.getElementById("searchInput"),
     softwareFilter: document.getElementById("softwareFilter"),
+    softwareSelectBtn: document.getElementById("softwareSelectBtn"),
+    softwareSelectText: document.getElementById("softwareSelectText"),
+    softwareSelectMenu: document.getElementById("softwareSelectMenu"),
+    softwareOptionList: document.getElementById("softwareOptionList"),
     statusFilter: document.getElementById("statusFilter"),
+    statusSelectBtn: document.getElementById("statusSelectBtn"),
+    statusSelectText: document.getElementById("statusSelectText"),
+    statusSelectMenu: document.getElementById("statusSelectMenu"),
+    statusOptionList: document.getElementById("statusOptionList"),
     licenseRows: document.getElementById("licenseRows"),
     createTabBtn: document.getElementById("createTabBtn"),
     listTabBtn: document.getElementById("listTabBtn"),
@@ -67,6 +79,11 @@ let licenses = [];
 let lastGeneratedKeys = [];
 let selectedLicenseId = "";
 let unsubscribeLicenses = null;
+let activeDropdown = null;
+let sortState = {
+    key: "createdAt",
+    direction: "desc"
+};
 
 const products = {
     "ani-deepth": {
@@ -101,6 +118,23 @@ const statusLabels = {
     blocked: "Đã khóa",
     expired: "Hết hạn"
 };
+
+const softwareFilterOptions = [
+    { value: "all", label: "Tất cả phần mềm" },
+    { value: "after-effects", label: "After Effects" },
+    { value: "illustrator", label: "Illustrator" },
+    { value: "maya", label: "Autodesk Maya" },
+    { value: "windows", label: "Windows" }
+];
+
+const statusFilterOptions = [
+    { value: "all", label: "Tất cả tình trạng" },
+    { value: "available", label: "Chưa kích hoạt" },
+    { value: "active", label: "Đang dùng" },
+    { value: "expiring", label: "Sắp hết hạn" },
+    { value: "expired", label: "Đã quá hạn" },
+    { value: "blocked", label: "Đã khóa" }
+];
 
 function getStoredTheme() {
     const stored = localStorage.getItem("anitoolCmsTheme");
@@ -167,6 +201,104 @@ function getProductName(productId) {
 
 function getProductSoftware(productId) {
     return getProductMeta(productId).software;
+}
+
+function getProductEntries(query = "") {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return Object.entries(products)
+        .map(([id, meta]) => ({ id, ...meta }))
+        .filter((product) => {
+            const haystack = [product.name, product.software, product.prefix, product.id].join(" ").toLowerCase();
+            return !normalizedQuery || haystack.indexOf(normalizedQuery) !== -1;
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function renderProductOptions() {
+    const selectedProductId = els.productId.value || "ani-deepth";
+    const query = String(els.productSearchInput.value || "");
+    const productsBySoftware = new Map();
+
+    getProductEntries(query).forEach((product) => {
+        if (!productsBySoftware.has(product.software)) {
+            productsBySoftware.set(product.software, []);
+        }
+        productsBySoftware.get(product.software).push(product);
+    });
+
+    if (productsBySoftware.size === 0) {
+        els.productOptionList.innerHTML = '<div class="smartEmpty">Không có sản phẩm phù hợp.</div>';
+        return;
+    }
+
+    els.productOptionList.innerHTML = Array.from(productsBySoftware.entries()).map(([software, items]) => `
+        <div class="smartSectionTitle">${escapeHtml(software)}</div>
+        ${items.map((product) => `
+            <button class="smartOption${product.id === selectedProductId ? " isSelected" : ""}" type="button" data-product-id="${escapeHtml(product.id)}">
+                <span>${escapeHtml(product.name)}</span>
+                <small>${escapeHtml(product.prefix)}</small>
+            </button>
+        `).join("")}
+    `).join("");
+}
+
+function renderFilterOptions(target, options, selectedValue) {
+    target.innerHTML = `
+        <div class="smartSectionTitle">Chọn bộ lọc</div>
+        ${options.map((option) => `
+            <button class="smartOption${option.value === selectedValue ? " isSelected" : ""}" type="button" data-filter-value="${escapeHtml(option.value)}">
+                <span>${escapeHtml(option.label)}</span>
+                ${option.value === selectedValue ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : ""}
+            </button>
+        `).join("")}
+    `;
+}
+
+function closeDropdown() {
+    if (!activeDropdown) {
+        return;
+    }
+
+    activeDropdown.menu.hidden = true;
+    activeDropdown.button.setAttribute("aria-expanded", "false");
+    activeDropdown = null;
+}
+
+function openDropdown(config) {
+    if (activeDropdown && activeDropdown.menu !== config.menu) {
+        closeDropdown();
+    }
+
+    activeDropdown = config;
+    config.menu.hidden = false;
+    config.button.setAttribute("aria-expanded", "true");
+
+    if (config.searchInput) {
+        config.searchInput.focus();
+        config.searchInput.select();
+    }
+}
+
+function toggleDropdown(config) {
+    if (!config.menu.hidden) {
+        closeDropdown();
+        return;
+    }
+
+    openDropdown(config);
+}
+
+function updateProductSelectText() {
+    els.productSelectText.textContent = getProductName(els.productId.value);
+}
+
+function setFilterValue(input, textEl, optionListEl, options, value) {
+    const option = options.find((item) => item.value === value) || options[0];
+    input.value = option.value;
+    textEl.textContent = option.label;
+    renderFilterOptions(optionListEl, options, option.value);
+    renderLicenses();
 }
 
 function getStatusLabel(status) {
@@ -286,23 +418,14 @@ function generateLicenseKey(productId = els.productId.value) {
     return parts.join("-");
 }
 
-function updateProductPicker() {
-    const currentProductId = els.productId.value || "ani-deepth";
-
-    els.productPicker.querySelectorAll("[data-product-id]").forEach((choice) => {
-        const isActive = choice.getAttribute("data-product-id") === currentProductId;
-        choice.classList.toggle("isActive", isActive);
-        choice.setAttribute("aria-pressed", isActive ? "true" : "false");
-    });
-}
-
 function setProduct(productId, shouldGenerateKey = false) {
     if (!products[productId]) {
         return;
     }
 
     els.productId.value = productId;
-    updateProductPicker();
+    updateProductSelectText();
+    renderProductOptions();
 
     if (shouldGenerateKey) {
         selectedLicenseId = "";
@@ -376,8 +499,71 @@ async function saveNewLicenseDocument(id, data) {
     });
 }
 
+function getSortValue(license, key) {
+    switch (key) {
+        case "key":
+            return license.licenseKey || license.id || "";
+        case "product":
+            return getProductName(license.productId);
+        case "status":
+            return getStatusText(license);
+        case "days":
+            return Number(license.durationDays) || 0;
+        case "devices":
+            return getDeviceCount(license);
+        case "email":
+            return license.email || "";
+        case "contact":
+            return license.contactInfo || "";
+        case "createdAt":
+        default:
+            return license.createdAt?.seconds || 0;
+    }
+}
+
+function compareSortValues(a, b) {
+    if (typeof a === "number" && typeof b === "number") {
+        return a - b;
+    }
+
+    return String(a).localeCompare(String(b), "vi", {
+        numeric: true,
+        sensitivity: "base"
+    });
+}
+
+function sortLicenses(items) {
+    const direction = sortState.direction === "asc" ? 1 : -1;
+
+    return [...items].sort((a, b) => {
+        const result = compareSortValues(getSortValue(a, sortState.key), getSortValue(b, sortState.key));
+        if (result !== 0) {
+            return result * direction;
+        }
+
+        return compareSortValues(getSortValue(b, "createdAt"), getSortValue(a, "createdAt"));
+    });
+}
+
+function updateSortHeaders() {
+    document.querySelectorAll(".sortHeader").forEach((button) => {
+        const key = button.getAttribute("data-sort-key");
+        const icon = button.querySelector("i");
+        const isActive = key === sortState.key;
+
+        button.classList.toggle("isActive", isActive);
+        button.setAttribute("aria-sort", isActive ? (sortState.direction === "asc" ? "ascending" : "descending") : "none");
+        if (icon) {
+            icon.className = isActive
+                ? `fa-solid fa-sort-${sortState.direction === "asc" ? "up" : "down"}`
+                : "fa-solid fa-sort";
+        }
+    });
+}
+
 function renderLicenses() {
     updateMetrics();
+    updateSortHeaders();
     const search = String(els.searchInput.value || "").trim().toLowerCase();
     const softwareFilter = els.softwareFilter.value || "all";
     const statusFilter = els.statusFilter.value || "all";
@@ -404,13 +590,14 @@ function renderLicenses() {
         ].join(" ").toLowerCase();
         return matchesSoftware && matchesStatus && (!search || haystack.indexOf(search) !== -1);
     });
+    const sortedLicenses = sortLicenses(filtered);
 
-    if (filtered.length === 0) {
+    if (sortedLicenses.length === 0) {
         els.licenseRows.innerHTML = '<tr><td colspan="7" class="empty">Chưa có license phù hợp.</td></tr>';
         return;
     }
 
-    els.licenseRows.innerHTML = filtered.map((license) => {
+    els.licenseRows.innerHTML = sortedLicenses.map((license) => {
         const status = getEffectiveStatus(license);
         const statusText = getStatusText(license);
         const selected = license.id === selectedLicenseId ? " class=\"isSelected\"" : "";
@@ -589,8 +776,84 @@ els.licenseRows.addEventListener("click", async (event) => {
 });
 
 els.searchInput.addEventListener("input", renderLicenses);
-els.softwareFilter.addEventListener("change", renderLicenses);
-els.statusFilter.addEventListener("change", renderLicenses);
+
+els.productSelectBtn.addEventListener("click", () => {
+    if (els.productSelectMenu.hidden) {
+        els.productSearchInput.value = "";
+        renderProductOptions();
+    }
+
+    toggleDropdown({
+        button: els.productSelectBtn,
+        menu: els.productSelectMenu,
+        searchInput: els.productSearchInput
+    });
+});
+
+els.productSearchInput.addEventListener("input", renderProductOptions);
+
+els.productOptionList.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-product-id]");
+    if (!option) {
+        return;
+    }
+
+    setProduct(option.getAttribute("data-product-id"), true);
+    closeDropdown();
+});
+
+els.softwareSelectBtn.addEventListener("click", () => {
+    toggleDropdown({
+        button: els.softwareSelectBtn,
+        menu: els.softwareSelectMenu
+    });
+});
+
+els.softwareOptionList.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-filter-value]");
+    if (!option) {
+        return;
+    }
+
+    setFilterValue(els.softwareFilter, els.softwareSelectText, els.softwareOptionList, softwareFilterOptions, option.getAttribute("data-filter-value"));
+    closeDropdown();
+});
+
+els.statusSelectBtn.addEventListener("click", () => {
+    toggleDropdown({
+        button: els.statusSelectBtn,
+        menu: els.statusSelectMenu
+    });
+});
+
+els.statusOptionList.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-filter-value]");
+    if (!option) {
+        return;
+    }
+
+    setFilterValue(els.statusFilter, els.statusSelectText, els.statusOptionList, statusFilterOptions, option.getAttribute("data-filter-value"));
+    closeDropdown();
+});
+
+els.listTabPanel.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-sort-key]");
+    if (!button) {
+        return;
+    }
+
+    const key = button.getAttribute("data-sort-key");
+    if (sortState.key === key) {
+        sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+    } else {
+        sortState = {
+            key,
+            direction: "asc"
+        };
+    }
+
+    renderLicenses();
+});
 
 els.createTabBtn.addEventListener("click", () => {
     setActiveWorkspaceTab("create");
@@ -600,13 +863,16 @@ els.listTabBtn.addEventListener("click", () => {
     setActiveWorkspaceTab("list");
 });
 
-els.productPicker.addEventListener("click", (event) => {
-    const choice = event.target.closest("[data-product-id]");
-    if (!choice) {
-        return;
+document.addEventListener("click", (event) => {
+    if (!event.target.closest(".smartSelect")) {
+        closeDropdown();
     }
+});
 
-    setProduct(choice.getAttribute("data-product-id"), true);
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        closeDropdown();
+    }
 });
 
 function showLogin() {
@@ -647,6 +913,10 @@ function showAccessDenied(user, error) {
     setStatus(message, true);
 }
 
+updateProductSelectText();
+renderProductOptions();
+renderFilterOptions(els.softwareOptionList, softwareFilterOptions, els.softwareFilter.value);
+renderFilterOptions(els.statusOptionList, statusFilterOptions, els.statusFilter.value);
 applyTheme(getStoredTheme());
 
 onAuthStateChanged(auth, async (user) => {
