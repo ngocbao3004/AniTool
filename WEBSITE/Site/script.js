@@ -4,6 +4,7 @@ import {
   browserLocalPersistence,
   getAuth,
   getRedirectResult,
+  getIdToken,
   GoogleAuthProvider,
   onAuthStateChanged,
   setPersistence,
@@ -31,6 +32,7 @@ const authPersistenceReady = setPersistence(siteAuth, browserLocalPersistence).c
 const siteDb = getFirestore(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
+const LICENSE_API_URL = "https://anitool-license-worker.anitool-license-worker.workers.dev";
 const translations = {
   en: {
     "nav.products": "Products",
@@ -125,6 +127,13 @@ const translations = {
     "account.daysLeft": "Days left",
     "account.neverExpires": "No expiry",
     "account.expired": "Expired",
+    "device.copy": "Sign in with the Gmail assigned to your license, then approve this device.",
+    "device.approve": "Approve device",
+    "device.signIn": "Sign in with Google below, then approve this computer.",
+    "device.ready": "Ready to approve this computer.",
+    "device.approving": "Approving this computer...",
+    "device.success": "Approved. Return to AniTool Manager; activation will finish automatically.",
+    "device.failure": "Unable to approve this computer.",
     "license.status.active": "Active",
     "license.status.pending": "Pending",
     "license.status.disabled": "Disabled",
@@ -226,6 +235,13 @@ const translations = {
     "account.daysLeft": "C\u00f2n l\u1ea1i",
     "account.neverExpires": "Kh\u00f4ng h\u1ebft h\u1ea1n",
     "account.expired": "\u0110\u00e3 h\u1ebft h\u1ea1n",
+    "device.copy": "\u0110\u0103ng nh\u1eadp b\u1eb1ng Gmail \u0111\u01b0\u1ee3c g\u00e1n cho license, sau \u0111\u00f3 x\u00e1c nh\u1eadn thi\u1ebft b\u1ecb n\u00e0y.",
+    "device.approve": "X\u00e1c nh\u1eadn thi\u1ebft b\u1ecb",
+    "device.signIn": "\u0110\u0103ng nh\u1eadp Google b\u00ean d\u01b0\u1edbi, sau \u0111\u00f3 x\u00e1c nh\u1eadn m\u00e1y t\u00ednh n\u00e0y.",
+    "device.ready": "S\u1eb5n s\u00e0ng x\u00e1c nh\u1eadn m\u00e1y t\u00ednh n\u00e0y.",
+    "device.approving": "\u0110ang x\u00e1c nh\u1eadn m\u00e1y t\u00ednh...",
+    "device.success": "\u0110\u00e3 x\u00e1c nh\u1eadn. Quay l\u1ea1i AniTool Manager; qu\u00e1 tr\u00ecnh k\u00edch ho\u1ea1t s\u1ebd t\u1ef1 ho\u00e0n t\u1ea5t.",
+    "device.failure": "Kh\u00f4ng th\u1ec3 x\u00e1c nh\u1eadn m\u00e1y t\u00ednh n\u00e0y.",
     "license.status.active": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
     "license.status.pending": "\u0110ang ch\u1edd",
     "license.status.disabled": "\u0110\u00e3 t\u1eaft",
@@ -267,11 +283,34 @@ const licenseInput = document.querySelector("[data-license-input]");
 const licenseSubmit = document.querySelector("[data-license-submit]");
 const siteGoogleButton = document.querySelector("[data-site-google]");
 const siteSignOutButton = document.querySelector("[data-site-signout]");
+const deviceApproval = document.querySelector("[data-device-approval]");
+const deviceApproveButton = document.querySelector("[data-device-approve]");
+const deviceApprovalStatus = document.querySelector("[data-device-approval-status]");
+const deviceApprovalTitle = document.querySelector("[data-device-approval-title]");
 let customerLicenses = [];
 let customerLicenseUnsubscribe = null;
 let currentUser = null;
 let authReady = false;
 let signedUiUserId = "";
+const activationUrl = new URL(window.location.href);
+const activationTokenFromUrl = activationUrl.searchParams.get("device_activation") || "";
+const isValidActivationToken = activationTokenFromUrl.length >= 100 && activationTokenFromUrl.length <= 4096;
+const productIdFromUrl = /^[a-z0-9-]{3,64}$/.test(activationUrl.searchParams.get("product") || "")
+  ? activationUrl.searchParams.get("product")
+  : "";
+
+if (isValidActivationToken) {
+  sessionStorage.setItem("anitool.deviceActivation", activationTokenFromUrl);
+  if (productIdFromUrl) sessionStorage.setItem("anitool.deviceProduct", productIdFromUrl);
+  activationUrl.searchParams.delete("device_activation");
+  activationUrl.searchParams.delete("product");
+  window.history.replaceState(null, "", `${activationUrl.pathname}${activationUrl.search}${activationUrl.hash}`);
+}
+
+const deviceActivationToken = isValidActivationToken
+  ? activationTokenFromUrl
+  : (sessionStorage.getItem("anitool.deviceActivation") || "");
+const deviceProductId = productIdFromUrl || sessionStorage.getItem("anitool.deviceProduct") || "";
 
 function t(key) {
   const dictionary = translations[state.lang] || translations.en;
@@ -361,6 +400,62 @@ function setAccountStatus(message = "", isError = false) {
   accountStatus.textContent = message;
   accountStatus.hidden = !message;
   accountStatus.classList.toggle("isError", isError);
+}
+
+function setDeviceApprovalStatus(message = "", isError = false) {
+  if (!deviceApprovalStatus) return;
+  deviceApprovalStatus.textContent = message;
+  deviceApprovalStatus.classList.toggle("isError", isError);
+}
+
+function syncDeviceApprovalUi(user) {
+  if (!deviceApproval || !deviceActivationToken) return;
+  deviceApproval.hidden = false;
+  if (deviceApprovalTitle) {
+    const productName = getProductName(deviceProductId || "ani-deepth");
+    deviceApprovalTitle.textContent = state.lang === "vi"
+      ? `X\u00e1c nh\u1eadn ${productName} tr\u00ean m\u00e1y t\u00ednh n\u00e0y`
+      : `Approve ${productName} on this computer`;
+  }
+  if (deviceApproveButton) deviceApproveButton.disabled = !user;
+  setDeviceApprovalStatus(user
+    ? t("device.ready")
+    : t("device.signIn"));
+}
+
+function clearDeviceActivationFromBrowser() {
+  sessionStorage.removeItem("anitool.deviceActivation");
+  sessionStorage.removeItem("anitool.deviceProduct");
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("device_activation");
+  window.history.replaceState(null, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+}
+
+async function approveDeviceActivation() {
+  if (!currentUser || !deviceActivationToken || !deviceApproveButton) return;
+  try {
+    deviceApproveButton.disabled = true;
+    setDeviceApprovalStatus(t("device.approving"));
+    const idToken = await getIdToken(currentUser, true);
+    const response = await fetch(`${LICENSE_API_URL}/v1/device-authorizations/approve`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ activationToken: deviceActivationToken })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.data?.approved) {
+      throw new Error(payload?.error?.message || t("device.failure"));
+    }
+    clearDeviceActivationFromBrowser();
+    setDeviceApprovalStatus(t("device.success"));
+    deviceApproveButton.hidden = true;
+  } catch (error) {
+    setDeviceApprovalStatus(error?.message || t("device.failure"), true);
+    deviceApproveButton.disabled = false;
+  }
 }
 
 function getAuthErrorMessage(error) {
@@ -565,6 +660,7 @@ function showGuestAccount() {
   setLoginCtaState(null);
   updateLicenseSummary(0, "account.noLicensesState");
   if (!accountStatus?.classList.contains("isError")) setAccountStatus("");
+  syncDeviceApprovalUi(null);
 }
 
 function showUserAccount(user) {
@@ -590,6 +686,7 @@ function showUserAccount(user) {
     }
   }
   setLoginCtaState(user);
+  syncDeviceApprovalUi(user);
   setAccountStatus(t("account.signedInStatus"));
   if (!isSameUiUser) {
     updateLicenseSummary(null, "account.loadingShort");
@@ -672,6 +769,7 @@ document.querySelectorAll("[data-lang-option]").forEach((button) => {
   button.addEventListener("click", () => {
     state.lang = button.dataset.langOption;
     applyLanguage();
+    syncDeviceApprovalUi(currentUser);
   });
 });
 licenseInput?.addEventListener("input", () => {
@@ -697,6 +795,7 @@ licenseForm?.addEventListener("submit", async (event) => {
     if (licenseSubmit) licenseSubmit.disabled = false;
   }
 });
+deviceApproveButton?.addEventListener("click", approveDeviceActivation);
 siteGoogleButton?.addEventListener("click", async () => {
   try {
     setAccountStatus(t("account.signingIn"));

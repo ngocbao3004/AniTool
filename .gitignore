@@ -28,3 +28,7 @@ PRODUCT/AfterEffects/AniDeepth/CSXS/
 PRODUCT/AfterEffects/AniDeepth/host/
 PRODUCT/AfterEffects/AniDeepth/tools/
 PRODUCT/AfterEffects/AniDeepth/.debug
+
+# Keep native product and license backend source out of the public Pages repository.
+PRODUCT/Windows/AniToolManager/
+WEBSITE/API/
