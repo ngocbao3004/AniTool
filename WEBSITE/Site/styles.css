@@ -36,12 +36,12 @@ html[data-theme="light"] {
   --muted: #625a4f;
   --muted-2: #887d6d;
   --blue: #9ea29c;
-  --green: #FFCC70;
-  --amber: #FFCC70;
+  --green: #C08A3E;
+  --amber: #C08A3E;
   --coral: #a96154;
   --accent-ink: #181109;
-  --accent-on: #633615;
-  --accent-hover: #C08A3E;
+  --accent-on: #FFF8EA;
+  --accent-hover: #9B6826;
   --shadow: rgba(46, 38, 24, 0.14);
   --soft-shadow: 0 26px 58px rgba(56, 45, 26, 0.12);
 }
