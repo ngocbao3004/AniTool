@@ -464,6 +464,37 @@ function getDeviceCount(license) {
     return 0;
 }
 
+function isVoidedLicense(license) {
+    return getEffectiveStatus(license) === "voided";
+}
+
+function getManagedLicenses() {
+    return licenses.filter((license) => !isVoidedLicense(license));
+}
+
+function hasActiveListFilter() {
+    return Boolean(String(els.searchInput.value || "").trim())
+        || (els.softwareFilter.value || "all") !== "all"
+        || (els.statusFilter.value || "all") !== "all";
+}
+
+function updateListStatus(visibleCount) {
+    const statusFilter = els.statusFilter.value || "all";
+    const managedCount = getManagedLicenses().length;
+    const voidedCount = licenses.length - managedCount;
+
+    if (statusFilter === "voided") {
+        setStatus(`Đang hiển thị ${visibleCount}/${voidedCount} license đã hủy còn trong DB.`);
+        return;
+    }
+    if (hasActiveListFilter()) {
+        setStatus(`Đang hiển thị ${visibleCount}/${managedCount} license.`);
+        return;
+    }
+
+    setStatus(`Đã tải ${managedCount} license.`);
+}
+
 function updateMetrics() {
     const counts = {
         available: 0,
@@ -487,7 +518,7 @@ function updateMetrics() {
         }
     });
 
-    els.licenseCount.textContent = String(licenses.length);
+    els.licenseCount.textContent = String(getManagedLicenses().length);
     els.availableCount.textContent = String(counts.available);
     els.activeCount.textContent = String(counts.active);
     els.expiringCount.textContent = String(counts.expiring);
@@ -667,7 +698,10 @@ async function updateLicenseStatus(license, nextStatus) {
     const normalizedStatus = String(nextStatus || "").toLowerCase();
     const currentStatus = String(license.status || "available").toLowerCase();
 
-    if (!editableStatusOptions.some((option) => option.value === normalizedStatus) || normalizedStatus === currentStatus) {
+    if (!editableStatusOptions.some((option) => option.value === normalizedStatus)) {
+        return;
+    }
+    if (normalizedStatus === currentStatus && normalizedStatus !== "voided") {
         return;
     }
 
@@ -895,7 +929,7 @@ async function applyBulkStatus(nextStatus) {
 
     const editableTargets = targets.filter((license) => {
         const currentStatus = String(license.status || "available").toLowerCase();
-        return currentStatus !== normalizedStatus
+        return (currentStatus !== normalizedStatus || normalizedStatus === "voided")
             && getEditableStatusOptions(license).some((item) => item.value === normalizedStatus);
     });
 
@@ -971,6 +1005,7 @@ function renderLicenses() {
     const sortedLicenses = sortLicenses(filtered);
     visibleLicenseIds = sortedLicenses.map((license) => license.id);
     updateSelectionUI();
+    updateListStatus(sortedLicenses.length);
 
     if (sortedLicenses.length === 0) {
         els.licenseRows.innerHTML = '<tr><td colspan="8" class="empty">Chưa có license phù hợp.</td></tr>';
@@ -1031,7 +1066,6 @@ function subscribeLicenses() {
         licenses = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
         licenses.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         renderLicenses();
-        setStatus(`Đã tải ${licenses.length} license.`);
     }, (error) => {
         setStatus(error.message, true);
     });

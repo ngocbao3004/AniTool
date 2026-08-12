@@ -809,8 +809,9 @@ textarea:disabled,
 
 table {
     width: 100%;
-    min-width: 1040px;
+    min-width: 1160px;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 th,
@@ -836,6 +837,42 @@ th {
 .selectColumn {
     width: 42px;
     text-align: center;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    width: 164px;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+    width: 190px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+    width: 152px;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+    width: 136px;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+    width: 72px;
+    text-align: center;
+}
+
+th:nth-child(7),
+td:nth-child(7) {
+    width: 224px;
+}
+
+th:nth-child(8),
+td:nth-child(8) {
+    width: auto;
 }
 
 .sortHeader {
@@ -996,7 +1033,7 @@ tbody tr.isSelected td {
     }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 860px) {
     .shell {
         padding: 12px;
     }
@@ -1089,6 +1126,7 @@ tbody tr.isSelected td {
     table {
         display: block;
         min-width: 0;
+        table-layout: auto;
     }
 
     thead {
@@ -1115,12 +1153,19 @@ tbody tr.isSelected td {
 
     td {
         display: grid;
+        width: auto;
         grid-template-columns: minmax(82px, 0.36fr) minmax(0, 1fr);
         gap: 12px;
         align-items: center;
         min-height: 34px;
         padding: 7px 0;
+        text-align: left;
         white-space: normal;
+    }
+
+    td:nth-child(n) {
+        width: auto;
+        text-align: left;
     }
 
     td::before {
