@@ -2,9 +2,10 @@ import { firebaseConfig } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
   getAuth,
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import {
@@ -85,6 +86,8 @@ const translations = {
     "account.guestTitle": "Sign in or register",
     "account.guestCopy": "Your first Google sign-in creates the account. No separate password is needed.",
     "account.google": "Continue with Google",
+    "account.redirecting": "Redirecting to Google...",
+    "account.unauthorizedDomain": "This domain is not authorized in Firebase. Add ngocbao3004.github.io in Authentication settings.",
     "account.signedIn": "Signed in",
     "account.signOut": "Sign out",
     "account.uid": "UID",
@@ -158,6 +161,8 @@ const translations = {
     "account.guestTitle": "\u0110\u0103ng nh\u1eadp ho\u1eb7c \u0111\u0103ng k\u00fd",
     "account.guestCopy": "L\u1ea7n \u0111\u0103ng nh\u1eadp Google \u0111\u1ea7u ti\u00ean s\u1ebd t\u1ea1o t\u00e0i kho\u1ea3n. Kh\u00f4ng c\u1ea7n m\u1eadt kh\u1ea9u ri\u00eang.",
     "account.google": "Ti\u1ebfp t\u1ee5c v\u1edbi Google",
+    "account.redirecting": "\u0110ang chuy\u1ec3n sang Google...",
+    "account.unauthorizedDomain": "Domain n\u00e0y ch\u01b0a \u0111\u01b0\u1ee3c cho ph\u00e9p trong Firebase. Th\u00eam ngocbao3004.github.io trong Authentication settings.",
     "account.signedIn": "\u0110\u00e3 \u0111\u0103ng nh\u1eadp",
     "account.signOut": "\u0110\u0103ng xu\u1ea5t",
     "account.uid": "UID",
@@ -192,6 +197,7 @@ const accountUser = document.querySelector("[data-account-user]");
 const accountEmail = document.querySelector("[data-account-email]");
 const accountUid = document.querySelector("[data-account-uid]");
 const accountLicenseList = document.querySelector("[data-license-list]");
+const accountStatus = document.querySelector("[data-account-status]");
 const siteGoogleButton = document.querySelector("[data-site-google]");
 const siteSignOutButton = document.querySelector("[data-site-signout]");
 let customerLicenses = [];
@@ -258,6 +264,17 @@ function applyTheme() {
   localStorage.setItem("anitool.theme", state.theme);
 }
 
+function setAccountStatus(message = "", isError = false) {
+  if (!accountStatus) return;
+  accountStatus.textContent = message;
+  accountStatus.hidden = !message;
+  accountStatus.classList.toggle("isError", isError);
+}
+
+function getAuthErrorMessage(error) {
+  if (error?.code === "auth/unauthorized-domain") return t("account.unauthorizedDomain");
+  return error?.message || "Unable to sign in.";
+}
 function getProductName(productId) {
   const names = {
     "ani-deepth": "AniDeepth",
@@ -377,10 +394,16 @@ document.querySelectorAll("[data-lang-option]").forEach((button) => {
 });
 siteGoogleButton?.addEventListener("click", async () => {
   try {
-    await signInWithPopup(siteAuth, googleProvider);
+    setAccountStatus(t("account.redirecting"));
+    siteGoogleButton.disabled = true;
+    await signInWithRedirect(siteAuth, googleProvider);
   } catch (error) {
-    if (accountLicenseList) accountLicenseList.innerHTML = `<p class="emptyAccount">${escapeHtml(error.message)}</p>`;
+    siteGoogleButton.disabled = false;
+    setAccountStatus(getAuthErrorMessage(error), true);
   }
+});
+getRedirectResult(siteAuth).catch((error) => {
+  setAccountStatus(getAuthErrorMessage(error), true);
 });
 siteSignOutButton?.addEventListener("click", () => {
   signOut(siteAuth);
