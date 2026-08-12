@@ -20,102 +20,177 @@
         </section>
 
         <section id="setupNotice" class="notice" hidden>
-            Fill <code>firebase-config.js</code>, enable Firebase Auth Email/Password, then create an <code>admins/{uid}</code> document.
+            Fill <code>firebase-config.js</code>, enable Firebase Auth Google provider, then create an <code>admins/{uid}</code> document.
         </section>
 
         <section id="loginPanel" class="panel loginPanel">
             <h2>Admin Login</h2>
-            <form id="loginForm" class="formGrid">
-                <label>
-                    <span>Email</span>
-                    <input id="loginEmail" type="email" autocomplete="username" required>
-                </label>
-                <label>
-                    <span>Password</span>
-                    <input id="loginPassword" type="password" autocomplete="current-password" required>
-                </label>
-                <button class="primaryButton" type="submit">Sign In</button>
-            </form>
+            <p class="panelCopy">Sign in with a Google account that exists in <code>admins/{uid}</code>.</p>
+            <button id="googleSignInBtn" class="googleButton" type="button">
+                <span class="googleMark">G</span>
+                <span>Continue with Google</span>
+            </button>
+            <p class="microNote">First login creates the Firebase user. Copy that UID in Firebase Authentication, then create the matching admin document.</p>
         </section>
 
         <section id="adminPanel" class="workspace" hidden>
-            <section class="panel licenseEditor">
-                <div class="panelHeader">
-                    <h2>License</h2>
-                    <button id="newLicenseBtn" type="button">New</button>
-                </div>
-                <form id="licenseForm" class="formGrid">
-                    <label>
-                        <span>License Key</span>
-                        <div class="inlineInput">
-                            <input id="licenseKey" type="text" autocomplete="off" required>
-                            <button id="generateKeyBtn" type="button">Generate</button>
-                        </div>
-                    </label>
-                    <label>
-                        <span>Email</span>
-                        <input id="licenseEmail" type="email" autocomplete="off" required>
-                    </label>
-                    <label>
-                        <span>Product</span>
-                        <select id="productId">
-                            <option value="ani-deepth">Ani Deepth</option>
-                        </select>
-                    </label>
-                    <label>
-                        <span>Status</span>
-                        <select id="licenseStatus">
-                            <option value="active">Active</option>
-                            <option value="blocked">Blocked</option>
-                            <option value="expired">Expired</option>
-                        </select>
-                    </label>
-                    <label>
-                        <span>Plan</span>
-                        <input id="licensePlan" type="text" value="pro" autocomplete="off">
-                    </label>
-                    <label>
-                        <span>Expires</span>
-                        <input id="expiresAt" type="date">
-                    </label>
-                    <label>
-                        <span>Max Devices</span>
-                        <input id="maxDevices" type="number" min="1" max="20" value="2">
-                    </label>
-                    <label class="wide">
-                        <span>Note</span>
-                        <textarea id="licenseNote" rows="3"></textarea>
-                    </label>
-                    <div class="buttonRow">
-                        <button class="primaryButton" type="submit">Save License</button>
-                        <button id="resetDevicesBtn" type="button">Reset Devices</button>
-                        <button id="deleteLicenseBtn" class="dangerButton" type="button">Delete</button>
+            <div class="panelStack">
+                <section class="panel redeemEditor">
+                    <div class="panelHeader">
+                        <h2>Redeem Codes</h2>
+                        <button id="copyCodesBtn" type="button">Copy Last</button>
                     </div>
-                </form>
-            </section>
+                    <form id="redeemForm" class="formGrid">
+                        <label>
+                            <span>Product</span>
+                            <select id="redeemProductId">
+                                <option value="ani-deepth">AniDeepth</option>
+                                <option value="ani-layout">Ani Layout</option>
+                                <option value="ani-anim">Ani Anim</option>
+                                <option value="ani-voice-check">Ani Voice Check</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Plan</span>
+                            <input id="redeemPlan" type="text" value="creator" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>Days</span>
+                            <input id="redeemDays" type="number" min="0" max="3650" value="365">
+                        </label>
+                        <label>
+                            <span>Max Devices</span>
+                            <input id="redeemMaxDevices" type="number" min="1" max="20" value="1">
+                        </label>
+                        <label>
+                            <span>Quantity</span>
+                            <input id="redeemQuantity" type="number" min="1" max="50" value="1">
+                        </label>
+                        <label class="wide">
+                            <span>Note</span>
+                            <textarea id="redeemNote" rows="2" placeholder="Payment note, customer name, or invoice id"></textarea>
+                        </label>
+                        <label class="wide">
+                            <span>Generated</span>
+                            <textarea id="generatedCodes" rows="4" readonly placeholder="Generated keys appear here"></textarea>
+                        </label>
+                        <div class="buttonRow">
+                            <button class="primaryButton" type="submit">Generate Redeem Key</button>
+                        </div>
+                    </form>
+                </section>
 
-            <section class="panel licenseList">
-                <div class="panelHeader">
-                    <h2>Licenses</h2>
-                    <input id="searchInput" type="search" placeholder="Search email or key">
-                </div>
-                <div class="tableWrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Key</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                                <th>Devices</th>
-                                <th>Expires</th>
-                            </tr>
-                        </thead>
-                        <tbody id="licenseRows">
-                            <tr><td colspan="5" class="empty">No license data.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                <section class="panel licenseEditor">
+                    <div class="panelHeader">
+                        <h2>Manual License</h2>
+                        <button id="newLicenseBtn" type="button">New</button>
+                    </div>
+                    <form id="licenseForm" class="formGrid">
+                        <label>
+                            <span>License Key</span>
+                            <div class="inlineInput">
+                                <input id="licenseKey" type="text" autocomplete="off" required>
+                                <button id="generateKeyBtn" type="button">Generate</button>
+                            </div>
+                        </label>
+                        <label>
+                            <span>Email</span>
+                            <input id="licenseEmail" type="email" autocomplete="off" required>
+                        </label>
+                        <label>
+                            <span>Owner UID</span>
+                            <input id="ownerUid" type="text" autocomplete="off" placeholder="Firebase user UID">
+                        </label>
+                        <label>
+                            <span>Product</span>
+                            <select id="productId">
+                                <option value="ani-deepth">AniDeepth</option>
+                                <option value="ani-layout">Ani Layout</option>
+                                <option value="ani-anim">Ani Anim</option>
+                                <option value="ani-voice-check">Ani Voice Check</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Status</span>
+                            <select id="licenseStatus">
+                                <option value="active">Active</option>
+                                <option value="blocked">Blocked</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Plan</span>
+                            <input id="licensePlan" type="text" value="pro" autocomplete="off">
+                        </label>
+                        <label>
+                            <span>Expires</span>
+                            <input id="expiresAt" type="date">
+                        </label>
+                        <label>
+                            <span>Max Devices</span>
+                            <input id="maxDevices" type="number" min="1" max="20" value="2">
+                        </label>
+                        <label class="wide">
+                            <span>Note</span>
+                            <textarea id="licenseNote" rows="3"></textarea>
+                        </label>
+                        <div class="buttonRow">
+                            <button class="primaryButton" type="submit">Save License</button>
+                            <button id="resetDevicesBtn" type="button">Reset Devices</button>
+                            <button id="deleteLicenseBtn" class="dangerButton" type="button">Delete</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+            <div class="panelStack">
+                <section class="panel codeList">
+                    <div class="panelHeader">
+                        <h2>Redeem Code List</h2>
+                        <input id="codeSearchInput" type="search" placeholder="Search code or product">
+                    </div>
+                    <div class="tableWrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Product</th>
+                                    <th>Status</th>
+                                    <th>Plan</th>
+                                    <th>Days</th>
+                                    <th>Redeemed By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="codeRows">
+                                <tr><td colspan="6" class="empty">No redeem codes.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="panel licenseList">
+                    <div class="panelHeader">
+                        <h2>Licenses</h2>
+                        <input id="searchInput" type="search" placeholder="Search email or key">
+                    </div>
+                    <div class="tableWrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Devices</th>
+                                    <th>Expires</th>
+                                </tr>
+                            </thead>
+                            <tbody id="licenseRows">
+                                <tr><td colspan="5" class="empty">No license data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
         </section>
 
         <p id="statusText" class="statusText">Ready.</p>

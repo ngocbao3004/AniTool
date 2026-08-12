@@ -7,7 +7,7 @@
   <meta name="description" content="AniTool is a product hub for focused animation workflow tools, starting with AniDeepth for After Effects.">
   <link rel="preload" href="assets/ani-deepth-hero.png" as="image">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=earth-metal-20260812-5">
+  <link rel="stylesheet" href="styles.css?v=redeem-20260812-1">
 </head>
 <body>
   <header class="siteHeader" data-header>
@@ -185,6 +185,18 @@
                 <strong data-account-state>Ready</strong>
               </div>
             </div>
+            <form class="redeemBox" data-redeem-form>
+              <label>
+                <span data-i18n="account.redeemLabel">Redeem key</span>
+                <div class="redeemInput">
+                  <input data-redeem-input type="text" autocomplete="off" spellcheck="false" placeholder="ANI-DEEPTH-XXXX-XXXX">
+                  <button class="button primary compactButton" type="submit" data-redeem-submit>
+                    <i class="fa-solid fa-key" aria-hidden="true"></i>
+                    <span data-i18n="account.redeemButton">Redeem</span>
+                  </button>
+                </div>
+              </label>
+            </form>
             <div class="licenseList" data-license-list>
               <p class="emptyAccount" data-i18n="account.loading">Loading licenses...</p>
             </div>
@@ -241,6 +253,6 @@
     </div>
   </footer>
 
-  <script type="module" src="script.js?v=account-ui-20260812-1"></script>
+  <script type="module" src="script.js?v=redeem-20260812-1"></script>
 </body>
 </html>

@@ -17,6 +17,7 @@ import {
   getFirestore,
   onSnapshot,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   where
@@ -92,6 +93,13 @@ const translations = {
     "account.guestTitle": "Sign in or register",
     "account.guestCopy": "Your first Google sign-in creates the account. No separate password is needed.",
     "account.google": "Continue with Google",
+    "account.redeemLabel": "Redeem key",
+    "account.redeemButton": "Redeem",
+    "account.redeemEmpty": "Enter a redeem key.",
+    "account.redeemChecking": "Checking redeem key...",
+    "account.redeemSuccess": "License added to your account.",
+    "account.redeemMissing": "This redeem key does not exist.",
+    "account.redeemUsed": "This redeem key has already been used.",
     "account.signingIn": "Opening Google sign-in...",
     "account.redirecting": "Redirecting to Google...",
     "account.signedInStatus": "Signed in successfully.",
@@ -182,6 +190,13 @@ const translations = {
     "account.guestTitle": "\u0110\u0103ng nh\u1eadp ho\u1eb7c \u0111\u0103ng k\u00fd",
     "account.guestCopy": "L\u1ea7n \u0111\u0103ng nh\u1eadp Google \u0111\u1ea7u ti\u00ean s\u1ebd t\u1ea1o t\u00e0i kho\u1ea3n. Kh\u00f4ng c\u1ea7n m\u1eadt kh\u1ea9u ri\u00eang.",
     "account.google": "Ti\u1ebfp t\u1ee5c v\u1edbi Google",
+    "account.redeemLabel": "Nh\u1eadp key",
+    "account.redeemButton": "K\u00edch ho\u1ea1t",
+    "account.redeemEmpty": "Nh\u1eadp redeem key tr\u01b0\u1edbc.",
+    "account.redeemChecking": "\u0110ang ki\u1ec3m tra redeem key...",
+    "account.redeemSuccess": "License \u0111\u00e3 \u0111\u01b0\u1ee3c g\u1eafn v\u00e0o t\u00e0i kho\u1ea3n.",
+    "account.redeemMissing": "Redeem key n\u00e0y kh\u00f4ng t\u1ed3n t\u1ea1i.",
+    "account.redeemUsed": "Redeem key n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c s\u1eed d\u1ee5ng.",
     "account.signingIn": "\u0110ang m\u1edf \u0111\u0103ng nh\u1eadp Google...",
     "account.redirecting": "\u0110ang chuy\u1ec3n sang Google...",
     "account.signedInStatus": "\u0110\u0103ng nh\u1eadp th\u00e0nh c\u00f4ng.",
@@ -239,6 +254,9 @@ const accountLicenseCount = document.querySelector("[data-license-count]");
 const accountState = document.querySelector("[data-account-state]");
 const accountLicenseList = document.querySelector("[data-license-list]");
 const accountStatus = document.querySelector("[data-account-status]");
+const redeemForm = document.querySelector("[data-redeem-form]");
+const redeemInput = document.querySelector("[data-redeem-input]");
+const redeemSubmit = document.querySelector("[data-redeem-submit]");
 const siteGoogleButton = document.querySelector("[data-site-google]");
 const siteSignOutButton = document.querySelector("[data-site-signout]");
 let customerLicenses = [];
@@ -361,23 +379,82 @@ function getLicenseStatusLabel(status) {
   return label === key ? status || "active" : label;
 }
 
-function getDaysLeftValue(expiresAt) {
+function normalizeRedeemCode(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, "");
+}
+
+function toDateFromFirestore(value) {
+  if (!value) return null;
+  if (typeof value.toDate === "function") return value.toDate();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getLicenseEndDate(license) {
+  if (license.expiresAt) {
+    const date = new Date(`${license.expiresAt}T23:59:59`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const durationDays = Number(license.durationDays || 0);
+  if (durationDays <= 0) return null;
+
+  const start = toDateFromFirestore(license.redeemedAt || license.createdAt);
+  if (!start) return null;
+
+  const end = new Date(start.getTime());
+  end.setDate(end.getDate() + durationDays);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+function formatDateLabel(date) {
+  if (!date) return t("account.neverExpires");
+  return new Intl.DateTimeFormat(state.lang === "vi" ? "vi-VN" : "en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
+function getDaysLeftValue(license) {
+  const end = getLicenseEndDate(license);
+  if (!end) return t("account.neverExpires");
+  const days = Math.ceil((end.getTime() - Date.now()) / 86400000);
+  return days;
+}
+
+function getDaysLeftLabel(license) {
+  const days = getDaysLeftValue(license);
+  if (days === t("account.neverExpires")) return days;
+  if (days < 0) return t("account.expired");
+  return state.lang === "vi" ? `${days} ng\u00e0y` : `${days} days`;
+}
+
+function getExpiryLabel(license) {
+  if (license.expiresAt) return license.expiresAt;
+  const end = getLicenseEndDate(license);
+  return formatDateLabel(end);
+}
+
+function getRedeemErrorMessage(error) {
+  if (error?.message === "redeem/missing") return t("account.redeemMissing");
+  if (error?.message === "redeem/used") return t("account.redeemUsed");
+  return getAuthErrorMessage(error);
+}
+
+function getLegacyDaysLeftValue(expiresAt) {
   if (!expiresAt) return t("account.neverExpires");
   const end = new Date(`${expiresAt}T23:59:59`);
   if (Number.isNaN(end.getTime())) return null;
   return Math.ceil((end.getTime() - Date.now()) / 86400000);
 }
 
-function getDaysLeftLabel(expiresAt) {
-  const days = getDaysLeftValue(expiresAt);
-  if (days === t("account.neverExpires")) return days;
-  if (days === null) return expiresAt || t("account.neverExpires");
-  if (days < 0) return t("account.expired");
-  return state.lang === "vi" ? `${days} ng\u00e0y` : `${days} days`;
-}
-
 function getLicenseStateClass(license) {
-  const days = getDaysLeftValue(license.expiresAt);
+  const days = license.expiresAt ? getLegacyDaysLeftValue(license.expiresAt) : getDaysLeftValue(license);
   if (typeof days === "number" && days < 0) return "expired";
   return String(license.status || "active").toLowerCase().replace(/[^a-z0-9_-]/g, "");
 }
@@ -408,7 +485,7 @@ function renderCustomerLicenses() {
   accountLicenseList.innerHTML = customerLicenses.map((license) => {
     const status = license.status || "active";
     const stateClass = getLicenseStateClass(license);
-    const expiresAt = license.expiresAt || t("account.neverExpires");
+    const expiresAt = getExpiryLabel(license);
     return `
       <article class="licenseCard is-${escapeHtml(stateClass)}">
         <div class="licenseMain">
@@ -432,7 +509,7 @@ function renderCustomerLicenses() {
         </div>
         <div class="licenseDetail">
           <span>${escapeHtml(t("account.daysLeft"))}</span>
-          <strong>${escapeHtml(getDaysLeftLabel(license.expiresAt))}</strong>
+          <strong>${escapeHtml(getDaysLeftLabel(license))}</strong>
         </div>
       </article>
     `;
@@ -497,6 +574,59 @@ function showUserAccount(user) {
     setAccountStatus(getAuthErrorMessage(error), true);
   });
 }
+
+async function redeemCodeForCurrentUser(code) {
+  if (!currentUser) {
+    throw new Error("auth/not-signed-in");
+  }
+
+  await runTransaction(siteDb, async (transaction) => {
+    const codeRef = doc(siteDb, "redeemCodes", code);
+    const licenseRef = doc(siteDb, "licenses", code);
+    const codeSnap = await transaction.get(codeRef);
+
+    if (!codeSnap.exists()) {
+      throw new Error("redeem/missing");
+    }
+
+    const codeData = codeSnap.data();
+    if ((codeData.status || "available") !== "available") {
+      throw new Error("redeem/used");
+    }
+
+    const licenseSnap = await transaction.get(licenseRef);
+    if (licenseSnap.exists()) {
+      throw new Error("redeem/used");
+    }
+
+    const durationDays = Number(codeData.durationDays || 0);
+    const maxDevices = Number(codeData.maxDevices || 1);
+    transaction.set(licenseRef, {
+      licenseKey: code,
+      sourceCode: code,
+      ownerUid: currentUser.uid,
+      email: currentUser.email || "",
+      productId: codeData.productId || "ani-deepth",
+      plan: codeData.plan || "creator",
+      status: "active",
+      durationDays: Number.isFinite(durationDays) ? durationDays : 0,
+      maxDevices: Number.isFinite(maxDevices) ? Math.max(1, maxDevices) : 1,
+      devices: [],
+      deviceCount: 0,
+      redeemedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    transaction.update(codeRef, {
+      status: "redeemed",
+      redeemedBy: currentUser.uid,
+      redeemedByEmail: currentUser.email || "",
+      redeemedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  });
+}
+
 function setScrolledState() {
   header.classList.toggle("scrolled", window.scrollY > 12);
 }
@@ -523,6 +653,29 @@ document.querySelectorAll("[data-lang-option]").forEach((button) => {
     state.lang = button.dataset.langOption;
     applyLanguage();
   });
+});
+redeemInput?.addEventListener("input", () => {
+  redeemInput.value = normalizeRedeemCode(redeemInput.value);
+});
+redeemForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const code = normalizeRedeemCode(redeemInput?.value);
+  if (!code) {
+    setAccountStatus(t("account.redeemEmpty"), true);
+    return;
+  }
+
+  try {
+    setAccountStatus(t("account.redeemChecking"));
+    if (redeemSubmit) redeemSubmit.disabled = true;
+    await redeemCodeForCurrentUser(code);
+    if (redeemInput) redeemInput.value = "";
+    setAccountStatus(t("account.redeemSuccess"));
+  } catch (error) {
+    setAccountStatus(getRedeemErrorMessage(error), true);
+  } finally {
+    if (redeemSubmit) redeemSubmit.disabled = false;
+  }
 });
 siteGoogleButton?.addEventListener("click", async () => {
   try {
