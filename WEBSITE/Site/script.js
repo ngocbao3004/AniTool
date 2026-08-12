@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
   setPersistence,
+  signInWithPopup,
   signInWithRedirect,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -91,6 +92,7 @@ const translations = {
     "account.guestTitle": "Sign in or register",
     "account.guestCopy": "Your first Google sign-in creates the account. No separate password is needed.",
     "account.google": "Continue with Google",
+    "account.signingIn": "Opening Google sign-in...",
     "account.redirecting": "Redirecting to Google...",
     "account.signedInStatus": "Signed in successfully.",
     "account.unauthorizedDomain": "This domain is not authorized in Firebase. Add ngocbao3004.github.io in Authentication settings.",
@@ -167,6 +169,7 @@ const translations = {
     "account.guestTitle": "\u0110\u0103ng nh\u1eadp ho\u1eb7c \u0111\u0103ng k\u00fd",
     "account.guestCopy": "L\u1ea7n \u0111\u0103ng nh\u1eadp Google \u0111\u1ea7u ti\u00ean s\u1ebd t\u1ea1o t\u00e0i kho\u1ea3n. Kh\u00f4ng c\u1ea7n m\u1eadt kh\u1ea9u ri\u00eang.",
     "account.google": "Ti\u1ebfp t\u1ee5c v\u1edbi Google",
+    "account.signingIn": "\u0110ang m\u1edf \u0111\u0103ng nh\u1eadp Google...",
     "account.redirecting": "\u0110ang chuy\u1ec3n sang Google...",
     "account.signedInStatus": "\u0110\u0103ng nh\u1eadp th\u00e0nh c\u00f4ng.",
     "account.unauthorizedDomain": "Domain n\u00e0y ch\u01b0a \u0111\u01b0\u1ee3c cho ph\u00e9p trong Firebase. Th\u00eam ngocbao3004.github.io trong Authentication settings.",
@@ -417,12 +420,30 @@ document.querySelectorAll("[data-lang-option]").forEach((button) => {
 });
 siteGoogleButton?.addEventListener("click", async () => {
   try {
-    setAccountStatus(t("account.redirecting"));
+    setAccountStatus(t("account.signingIn"));
+    await authPersistenceReady;
     siteGoogleButton.disabled = true;
-    await signInWithRedirect(siteAuth, googleProvider);
+    const result = await signInWithPopup(siteAuth, googleProvider);
+    if (result?.user) {
+      showUserAccount(result.user);
+      setAccountStatus(t("account.signedInStatus"));
+      document.getElementById("account")?.scrollIntoView({ block: "start" });
+    }
   } catch (error) {
+    if (["auth/popup-blocked", "auth/cancelled-popup-request"].indexOf(error?.code) !== -1) {
+      try {
+        setAccountStatus(t("account.redirecting"));
+        sessionStorage.setItem("anitool.loginRedirect", "1");
+        await signInWithRedirect(siteAuth, googleProvider);
+        return;
+      } catch (redirectError) {
+        setAccountStatus(getAuthErrorMessage(redirectError), true);
+      }
+    } else {
+      setAccountStatus(getAuthErrorMessage(error), true);
+    }
+  } finally {
     siteGoogleButton.disabled = false;
-    setAccountStatus(getAuthErrorMessage(error), true);
   }
 });
 getRedirectResult(siteAuth).then((result) => {
