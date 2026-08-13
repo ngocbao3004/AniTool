@@ -105,7 +105,9 @@ const els = {
     releaseNotes: document.getElementById("releaseNotes"),
     testPrimaryUrlBtn: document.getElementById("testPrimaryUrlBtn"),
     testBackupUrlBtn: document.getElementById("testBackupUrlBtn"),
-    saveReleaseBtn: document.getElementById("saveReleaseBtn")
+    saveReleaseBtn: document.getElementById("saveReleaseBtn"),
+    publishReleaseBtn: document.getElementById("publishReleaseBtn"),
+    releasePublishState: document.getElementById("releasePublishState")
 };
 
 let licenses = [];
@@ -624,7 +626,8 @@ function setReleaseFormBusy(isBusy) {
         els.releaseNotes,
         els.testPrimaryUrlBtn,
         els.testBackupUrlBtn,
-        els.saveReleaseBtn
+        els.saveReleaseBtn,
+        els.publishReleaseBtn
     ].forEach((element) => {
         element.disabled = isBusy;
     });
@@ -638,6 +641,46 @@ function clearReleaseForm() {
     els.releaseDeliveryMode.value = "direct";
     els.releaseAvailable.checked = false;
     els.releaseNotes.value = "";
+    els.releasePublishState.textContent = "Chưa có bản đã phát hành";
+}
+
+function fillReleaseForm(release) {
+    els.releaseVersion.value = release.version || "";
+    els.releasePrimaryUrl.value = release.primaryUrl || "";
+    els.releaseBackupUrl.value = release.backupUrl || "";
+    els.releaseSha256.value = release.sha256 || "";
+    els.releaseDeliveryMode.value = release.deliveryMode === "web" ? "web" : "direct";
+    els.releaseAvailable.checked = release.available === true;
+    els.releaseNotes.value = release.notes || "";
+}
+
+function getReleasePayload(requirePublishable) {
+    const primaryUrl = normalizeReleaseUrl(els.releasePrimaryUrl.value, "Link chính");
+    const backupUrl = normalizeReleaseUrl(els.releaseBackupUrl.value, "Link dự phòng");
+    const sha256 = String(els.releaseSha256.value || "").trim().toUpperCase().replace(/\s+/g, "");
+    const version = String(els.releaseVersion.value || "").trim();
+    const available = els.releaseAvailable.checked;
+    const deliveryMode = els.releaseDeliveryMode.value === "web" ? "web" : "direct";
+
+    if (requirePublishable && available && !primaryUrl && !backupUrl) {
+        throw new Error("Cần ít nhất một link trước khi phát hành.");
+    }
+    if (requirePublishable && available && !version) {
+        throw new Error("Cần nhập phiên bản trước khi phát hành.");
+    }
+    if (requirePublishable && available && deliveryMode === "direct" && !/^[A-F0-9]{64}$/.test(sha256)) {
+        throw new Error("Tải trực tiếp cần mã SHA-256 gồm đúng 64 ký tự.");
+    }
+    return {
+        available,
+        backupUrl,
+        deliveryMode,
+        notes: String(els.releaseNotes.value || "").trim(),
+        primaryUrl,
+        productId: els.releaseProductId.value,
+        sha256,
+        version
+    };
 }
 
 async function loadProductRelease() {
@@ -657,14 +700,13 @@ async function loadProductRelease() {
             return;
         }
 
-        const release = snapshot.data();
-        els.releaseVersion.value = release.version || "";
-        els.releasePrimaryUrl.value = release.primaryUrl || "";
-        els.releaseBackupUrl.value = release.backupUrl || "";
-        els.releaseSha256.value = release.sha256 || "";
-        els.releaseDeliveryMode.value = release.deliveryMode === "web" ? "web" : "direct";
-        els.releaseAvailable.checked = release.available === true;
-        els.releaseNotes.value = release.notes || "";
+        const documentData = snapshot.data();
+        const release = documentData.draft || documentData.published || documentData;
+        fillReleaseForm(release);
+        const published = documentData.published || (documentData.version ? documentData : null);
+        els.releasePublishState.textContent = published && published.version
+            ? `Đang phát hành v${published.version}`
+            : "Chưa có bản đã phát hành";
         setStatus(`Đã tải thông tin phát hành ${getProductName(productId)}.`);
     } catch (error) {
         setStatus(error.message, true);
@@ -677,19 +719,7 @@ async function loadProductRelease() {
 
 async function saveProductRelease() {
     const productId = els.releaseProductId.value;
-    const primaryUrl = normalizeReleaseUrl(els.releasePrimaryUrl.value, "Link chính");
-    const backupUrl = normalizeReleaseUrl(els.releaseBackupUrl.value, "Link dự phòng");
-    const sha256 = String(els.releaseSha256.value || "").trim().toUpperCase().replace(/\s+/g, "");
-
-    if (els.releaseAvailable.checked && !primaryUrl && !backupUrl) {
-        throw new Error("Cần ít nhất một link trước khi cho phép phát hành.");
-    }
-    if (els.releaseAvailable.checked && !String(els.releaseVersion.value || "").trim()) {
-        throw new Error("Cần nhập phiên bản trước khi cho phép phát hành.");
-    }
-    if (els.releaseAvailable.checked && els.releaseDeliveryMode.value === "direct" && !/^[A-F0-9]{64}$/.test(sha256)) {
-        throw new Error("Tải trực tiếp cần mã SHA-256 gồm đúng 64 ký tự.");
-    }
+    const draft = getReleasePayload(false);
 
     setReleaseFormBusy(true);
     try {
@@ -697,18 +727,37 @@ async function saveProductRelease() {
             productId,
             productName: getProductName(productId),
             software: getProductSoftware(productId),
-            version: String(els.releaseVersion.value || "").trim(),
-            primaryUrl,
-            backupUrl,
-            sha256,
-            deliveryMode: els.releaseDeliveryMode.value === "web" ? "web" : "direct",
-            available: els.releaseAvailable.checked,
-            notes: String(els.releaseNotes.value || "").trim(),
+            draft,
+            draftSavedAt: serverTimestamp(),
             updatedBy: auth.currentUser ? auth.currentUser.uid : "",
             updatedByEmail: auth.currentUser ? auth.currentUser.email || "" : "",
             updatedAt: serverTimestamp()
         }, { merge: true });
-        setStatus(`Đã lưu bản phát hành ${getProductName(productId)}.`);
+        setStatus(`Đã lưu bản nháp ${getProductName(productId)}. Người dùng chưa nhận cập nhật.`);
+    } finally {
+        setReleaseFormBusy(false);
+    }
+}
+
+async function publishProductRelease() {
+    const productId = els.releaseProductId.value;
+    const published = getReleasePayload(true);
+    const releaseId = `${productId}-${published.version || "disabled"}-${Date.now()}`;
+    setReleaseFormBusy(true);
+    try {
+        await setDoc(doc(db, "productReleases", productId), {
+            productId,
+            productName: getProductName(productId),
+            software: getProductSoftware(productId),
+            draft: published,
+            published: { ...published, releaseId, publishedAt: new Date().toISOString() },
+            publishedAt: serverTimestamp(),
+            updatedBy: auth.currentUser ? auth.currentUser.uid : "",
+            updatedByEmail: auth.currentUser ? auth.currentUser.email || "" : "",
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        els.releasePublishState.textContent = published.version ? `Đang phát hành v${published.version}` : "Đã tắt phát hành";
+        setStatus(`Đã phát hành cập nhật ${getProductName(productId)}${published.version ? ` v${published.version}` : ""}.`);
     } finally {
         setReleaseFormBusy(false);
     }
@@ -1591,6 +1640,14 @@ els.releaseForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
         await saveProductRelease();
+    } catch (error) {
+        setStatus(error.message, true);
+    }
+});
+
+els.publishReleaseBtn.addEventListener("click", async () => {
+    try {
+        await publishProductRelease();
     } catch (error) {
         setStatus(error.message, true);
     }

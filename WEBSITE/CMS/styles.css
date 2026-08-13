@@ -1,17 +1,18 @@
 :root {
-    --bg: #15130f;
-    --bg-soft: #211d17;
-    --surface: #2d281f;
-    --surface-2: #383126;
-    --surface-3: #4c4232;
-    --text: #f6efe4;
-    --muted: #c8bcaa;
-    --muted-2: #958873;
+    --bg: #141312;
+    --bg-soft: #1f1d19;
+    --surface: #2a2721;
+    --surface-2: #353128;
+    --surface-3: #474238;
+    --text: #f4efe6;
+    --muted: #c4baaa;
+    --muted-2: #938978;
     --line: rgba(255, 255, 255, 0.08);
     --line-strong: rgba(255, 255, 255, 0.14);
     --accent: #ffcc70;
     --accent-on: #633615;
-    --accent-hover: #c08a3e;
+    --accent-hover: #ffbb4d;
+    --accent-hover-on: #633615;
     --brand-logo: #FFCC70;
     --google-button-bg: #131314;
     --google-button-hover: #1f1f20;
@@ -20,7 +21,14 @@
     --danger: #d87b6d;
     --ok: #8ccf9b;
     --shadow: rgba(0, 0, 0, 0.34);
-    --soft-shadow: 0 28px 70px rgba(0, 0, 0, 0.24);
+    --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.16);
+    --shadow-md: 0 16px 38px rgba(0, 0, 0, 0.22);
+    --shadow-lg: 0 28px 70px rgba(0, 0, 0, 0.28);
+    --soft-shadow: var(--shadow-lg);
+    --focus-ring: color-mix(in srgb, var(--accent) 52%, transparent);
+    --motion-fast: 0.5s;
+    --motion-base: 0.5s;
+    --ease-ui: ease;
     --radius-outer: 8px;
     --radius-gap: 2px;
     --radius-inner: calc(var(--radius-outer) - var(--radius-gap));
@@ -34,19 +42,20 @@
 }
 
 html[data-theme="light"] {
-    --bg: #f5f0e6;
-    --bg-soft: #e8dfcf;
+    --bg: #f4f0e7;
+    --bg-soft: #e7e1d4;
     --surface: #fffaf0;
-    --surface-2: #ece2d0;
-    --surface-3: #d9cbb6;
-    --text: #1d1710;
-    --muted: #63584a;
-    --muted-2: #897b67;
+    --surface-2: #ece4d5;
+    --surface-3: #d9d0bf;
+    --text: #1b1814;
+    --muted: #625a4f;
+    --muted-2: #887d6d;
     --line: rgba(70, 50, 24, 0.1);
     --line-strong: rgba(70, 50, 24, 0.18);
     --accent: #c08a3e;
-    --accent-on: #fff8ea;
-    --accent-hover: #9b6826;
+    --accent-on: #ffffff;
+    --accent-hover: #936127;
+    --accent-hover-on: #ffffff;
     --brand-logo: #c08a3e;
     --google-button-bg: #ffffff;
     --google-button-hover: #f8f8f8;
@@ -54,8 +63,11 @@ html[data-theme="light"] {
     --google-button-text: #1f1f1f;
     --danger: #b45a4f;
     --ok: #4a8b5e;
-    --shadow: rgba(76, 54, 22, 0.13);
-    --soft-shadow: 0 26px 58px rgba(76, 54, 22, 0.14);
+    --shadow: rgba(46, 38, 24, 0.14);
+    --shadow-sm: 0 6px 18px rgba(56, 45, 26, 0.08);
+    --shadow-md: 0 16px 38px rgba(56, 45, 26, 0.12);
+    --shadow-lg: 0 28px 64px rgba(56, 45, 26, 0.16);
+    --soft-shadow: var(--shadow-lg);
 }
 
 * {
@@ -87,26 +99,35 @@ button {
     padding: 0 13px;
     font-weight: 760;
     cursor: pointer;
-    transition: background 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+    transition: all 0.5s ease;
 }
 
 button:hover,
 button:focus-visible {
     background: color-mix(in srgb, var(--text) 15%, transparent);
     outline: none;
-    transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .primaryButton {
     background: var(--accent);
     color: var(--accent-on);
-    box-shadow: 0 16px 34px color-mix(in srgb, var(--accent) 22%, transparent);
+    box-shadow: var(--shadow-sm);
 }
 
 .primaryButton:hover,
 .primaryButton:focus-visible {
     background: var(--accent-hover);
-    color: var(--accent-on);
+    color: var(--accent-hover-on);
+    box-shadow: var(--shadow-md);
 }
 
 .dangerButton {
@@ -218,7 +239,7 @@ label span,
 }
 
 .bulkToggleButton i {
-    transition: color 160ms ease, transform 220ms ease;
+    transition: color var(--motion-base) var(--ease-ui), transform var(--motion-base) var(--ease-ui);
 }
 
 .bulkToggleButton.isActive {
@@ -426,7 +447,13 @@ code {
 .workspaceTab.isActive {
     background: var(--accent);
     color: var(--accent-on);
-    box-shadow: 0 12px 26px color-mix(in srgb, var(--accent) 18%, transparent);
+    box-shadow: var(--shadow-sm);
+}
+
+.workspaceTab.isActive:hover,
+.workspaceTab.isActive:focus-visible {
+    background: var(--accent-hover);
+    color: var(--accent-hover-on);
 }
 
 .workspacePanels {
@@ -573,12 +600,19 @@ label span {
 
 .releaseActions {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 8px;
 }
 
-.releaseActions .primaryButton {
+.releasePublishState {
     margin-left: auto;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.releaseActions .primaryButton {
+    margin-left: 0;
 }
 
 input,
@@ -592,7 +626,7 @@ textarea {
     color: var(--text);
     padding: 10px 11px;
     outline: 1px solid transparent;
-    transition: background 150ms ease, outline-color 150ms ease, box-shadow 150ms ease;
+    transition: background-color var(--motion-base) var(--ease-ui), outline-color var(--motion-base) var(--ease-ui), box-shadow var(--motion-base) var(--ease-ui);
 }
 
 input[type="number"] {
@@ -624,7 +658,7 @@ select:focus,
 textarea:focus {
     background: color-mix(in srgb, var(--text) 10%, transparent);
     outline-color: color-mix(in srgb, var(--accent) 80%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 button:disabled,
@@ -674,7 +708,7 @@ textarea:disabled,
 .smartSelectButton:focus-visible,
 .smartSelectButton[aria-expanded="true"] {
     background: color-mix(in srgb, var(--text) 11%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
     transform: none;
 }
 
@@ -687,6 +721,7 @@ textarea:disabled,
 .smartSelectButton i {
     color: var(--muted-2);
     font-size: 11px;
+    transition: color var(--motion-base) var(--ease-ui), transform var(--motion-base) var(--ease-ui);
 }
 
 .smartSelectButton[aria-expanded="true"] i {
@@ -1163,6 +1198,11 @@ tbody tr.isSelected td {
 
     .releaseActions .primaryButton {
         margin-left: 0;
+    }
+
+    .releasePublishState {
+        margin-left: 0;
+        text-align: center;
     }
 
     .workspaceTabs {

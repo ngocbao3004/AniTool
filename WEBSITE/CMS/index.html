@@ -261,16 +261,18 @@
                         </label>
                         <label class="releaseAvailability">
                             <input id="releaseAvailable" type="checkbox">
-                            <span>Cho phép phát hành</span>
+                            <span>Bản cập nhật khả dụng</span>
                         </label>
                         <label class="wide">
                             <span>Ghi chú cho người dùng</span>
                             <textarea id="releaseNotes" maxlength="500" rows="3" placeholder="Nội dung ngắn hiển thị trong Manager"></textarea>
                         </label>
                         <div class="releaseActions wide">
+                            <span id="releasePublishState" class="releasePublishState">Chưa có bản đã phát hành</span>
                             <button id="testPrimaryUrlBtn" type="button">Mở link chính</button>
                             <button id="testBackupUrlBtn" type="button">Mở link dự phòng</button>
-                            <button id="saveReleaseBtn" class="primaryButton" type="submit">Lưu phát hành</button>
+                            <button id="saveReleaseBtn" type="submit">Lưu bản nháp</button>
+                            <button id="publishReleaseBtn" class="primaryButton" type="button">Phát hành cập nhật</button>
                         </div>
                     </form>
                 </section>
