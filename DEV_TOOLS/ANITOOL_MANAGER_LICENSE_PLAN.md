@@ -11,6 +11,7 @@ Completed:
 - Manager signed-out, My Products, Add License and Credits views.
 - Google avatar, light/dark theme and DPAPI credential storage.
 - Smart Open / Update / Download action with primary-to-backup fallback.
+- SHA-256 verification before Manager opens a directly downloaded package.
 - Existing AniDeepth `--check` contract and online verification.
 - Legacy Manager key migration through the signed-in Gmail.
 - Local install and versioned win-x64 ZIP packaging with SHA-256 output.

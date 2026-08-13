@@ -99,6 +99,7 @@ const els = {
     releaseVersion: document.getElementById("releaseVersion"),
     releasePrimaryUrl: document.getElementById("releasePrimaryUrl"),
     releaseBackupUrl: document.getElementById("releaseBackupUrl"),
+    releaseSha256: document.getElementById("releaseSha256"),
     releaseDeliveryMode: document.getElementById("releaseDeliveryMode"),
     releaseAvailable: document.getElementById("releaseAvailable"),
     releaseNotes: document.getElementById("releaseNotes"),
@@ -617,6 +618,7 @@ function setReleaseFormBusy(isBusy) {
         els.releaseVersion,
         els.releasePrimaryUrl,
         els.releaseBackupUrl,
+        els.releaseSha256,
         els.releaseDeliveryMode,
         els.releaseAvailable,
         els.releaseNotes,
@@ -632,6 +634,7 @@ function clearReleaseForm() {
     els.releaseVersion.value = "";
     els.releasePrimaryUrl.value = "";
     els.releaseBackupUrl.value = "";
+    els.releaseSha256.value = "";
     els.releaseDeliveryMode.value = "direct";
     els.releaseAvailable.checked = false;
     els.releaseNotes.value = "";
@@ -658,6 +661,7 @@ async function loadProductRelease() {
         els.releaseVersion.value = release.version || "";
         els.releasePrimaryUrl.value = release.primaryUrl || "";
         els.releaseBackupUrl.value = release.backupUrl || "";
+        els.releaseSha256.value = release.sha256 || "";
         els.releaseDeliveryMode.value = release.deliveryMode === "web" ? "web" : "direct";
         els.releaseAvailable.checked = release.available === true;
         els.releaseNotes.value = release.notes || "";
@@ -675,12 +679,16 @@ async function saveProductRelease() {
     const productId = els.releaseProductId.value;
     const primaryUrl = normalizeReleaseUrl(els.releasePrimaryUrl.value, "Link chính");
     const backupUrl = normalizeReleaseUrl(els.releaseBackupUrl.value, "Link dự phòng");
+    const sha256 = String(els.releaseSha256.value || "").trim().toUpperCase().replace(/\s+/g, "");
 
     if (els.releaseAvailable.checked && !primaryUrl && !backupUrl) {
         throw new Error("Cần ít nhất một link trước khi cho phép phát hành.");
     }
     if (els.releaseAvailable.checked && !String(els.releaseVersion.value || "").trim()) {
         throw new Error("Cần nhập phiên bản trước khi cho phép phát hành.");
+    }
+    if (els.releaseAvailable.checked && els.releaseDeliveryMode.value === "direct" && !/^[A-F0-9]{64}$/.test(sha256)) {
+        throw new Error("Tải trực tiếp cần mã SHA-256 gồm đúng 64 ký tự.");
     }
 
     setReleaseFormBusy(true);
@@ -692,6 +700,7 @@ async function saveProductRelease() {
             version: String(els.releaseVersion.value || "").trim(),
             primaryUrl,
             backupUrl,
+            sha256,
             deliveryMode: els.releaseDeliveryMode.value === "web" ? "web" : "direct",
             available: els.releaseAvailable.checked,
             notes: String(els.releaseNotes.value || "").trim(),
