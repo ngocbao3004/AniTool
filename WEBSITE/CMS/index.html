@@ -132,12 +132,19 @@
                             </div>
                         </label>
                         <label>
+                            <span>Loại license</span>
+                            <select id="licenseType">
+                                <option value="personal">Personal</option>
+                                <option value="family">Family</option>
+                            </select>
+                        </label>
+                        <label>
                             <span>Số ngày</span>
                             <input id="durationDays" type="number" min="1" max="36500" value="365" required>
                         </label>
                         <label>
-                            <span>Số máy</span>
-                            <input id="maxDevices" type="number" min="1" max="20" value="1" required>
+                            <span>Số máy / seat</span>
+                            <input id="maxDevices" type="number" min="1" max="100" value="1" required>
                         </label>
                         <label class="wide">
                             <span>Thông tin liên hệ</span>

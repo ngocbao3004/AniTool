@@ -6,26 +6,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return signedIn() &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
     match /admins/{adminId} {
-      allow get: if signedIn() && request.auth.uid == adminId;
-      allow list: if isAdmin();
-      allow write: if false;
+      allow read, write: if false;
     }
 
     match /users/{userId} {
-      allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow get: if signedIn() && request.auth.uid == userId;
       allow create, update: if signedIn() && request.auth.uid == userId;
-      allow list, delete: if isAdmin();
+      allow list, delete: if false;
     }
 
     match /licenses/{licenseId} {
-      allow read, write: if isAdmin();
-
       allow get: if signedIn() &&
         (
           resource.data.ownerUid == request.auth.uid ||
@@ -53,11 +44,15 @@ service cloud.firestore {
     }
 
     match /licenseEvents/{eventId} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
     match /productReleases/{productId} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
+    }
+
+    match /adminAuditEvents/{eventId} {
+      allow read, write: if false;
     }
 
     match /{document=**} {

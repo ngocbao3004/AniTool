@@ -7,24 +7,12 @@ import {
     signInWithPopup,
     signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    getDoc,
-    getFirestore,
-    onSnapshot,
-    serverTimestamp,
-    setDoc,
-    updateDoc
-} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
+const ADMIN_API_URL = "https://anitool-license-worker.anitool-license-worker.workers.dev";
 
 const els = {
     setupNotice: document.getElementById("setupNotice"),
@@ -61,6 +49,7 @@ const els = {
     productSearchInput: document.getElementById("productSearchInput"),
     productOptionList: document.getElementById("productOptionList"),
     durationDays: document.getElementById("durationDays"),
+    licenseType: document.getElementById("licenseType"),
     maxDevices: document.getElementById("maxDevices"),
     copyLicensesBtn: document.getElementById("copyLicensesBtn"),
     generateKeyBtn: document.getElementById("generateKeyBtn"),
@@ -115,16 +104,85 @@ let lastGeneratedKeys = [];
 let selectedLicenseId = "";
 let selectedLicenseIds = new Set();
 let visibleLicenseIds = [];
-let unsubscribeLicenses = null;
 let activeDropdown = null;
 let sortState = {
     key: "createdAt",
     direction: "desc"
 };
 let releaseLoadSequence = 0;
+let licenseLoadSequence = 0;
 
 const MIN_DURATION_DAYS = 1;
 const MAX_DURATION_DAYS = 36500;
+
+async function adminApi(path, options = {}, retryAuth = true) {
+    const user = auth.currentUser;
+    if (!user) {
+        const error = new Error("Bạn cần đăng nhập lại để tiếp tục.");
+        error.code = "AUTH_REQUIRED";
+        throw error;
+    }
+
+    const token = await user.getIdToken(!retryAuth);
+    const headers = new Headers(options.headers || {});
+    headers.set("Authorization", `Bearer ${token}`);
+    if (options.body !== undefined) {
+        headers.set("Content-Type", "application/json");
+    }
+
+    const response = await fetch(`${ADMIN_API_URL}${path}`, {
+        method: options.method || "GET",
+        headers,
+        body: options.body === undefined ? undefined : JSON.stringify(options.body)
+    });
+
+    if (response.status === 401 && retryAuth) {
+        return adminApi(path, options, false);
+    }
+
+    let payload = null;
+    try {
+        payload = await response.json();
+    } catch {
+        // The API normally returns JSON; this keeps network/proxy failures readable.
+    }
+
+    if (!response.ok || !payload || payload.ok !== true) {
+        const error = new Error(payload?.error?.message || `Admin API failed (${response.status}).`);
+        error.code = payload?.error?.code || "ADMIN_API_FAILED";
+        error.requestId = payload?.requestId || response.headers.get("X-Request-Id") || "";
+        throw error;
+    }
+
+    return payload.data;
+}
+
+async function loadLicenses() {
+    const sequence = ++licenseLoadSequence;
+    const loaded = [];
+    let pageToken = "";
+
+    for (let page = 0; page < 50; page += 1) {
+        const query = new URLSearchParams({ pageSize: "200" });
+        if (pageToken) {
+            query.set("pageToken", pageToken);
+        }
+        const data = await adminApi(`/v1/admin/licenses?${query.toString()}`);
+        loaded.push(...(Array.isArray(data.licenses) ? data.licenses : []));
+        pageToken = typeof data.nextPageToken === "string" ? data.nextPageToken : "";
+        if (!pageToken) {
+            if (sequence !== licenseLoadSequence) {
+                return;
+            }
+            licenses = loaded;
+            licenses.sort((a, b) => (getTimestampDate(b.createdAt)?.getTime() || 0) - (getTimestampDate(a.createdAt)?.getTime() || 0));
+            renderLicenses();
+            return;
+        }
+    }
+
+    throw new Error("Danh sách license quá lớn để tải trong một lần.");
+}
 
 const products = {
     "ani-deepth": {
@@ -132,6 +190,12 @@ const products = {
         software: "After Effects",
         softwareKey: "after-effects",
         prefix: "AD"
+    },
+    "ani-curves": {
+        name: "AniCurves",
+        software: "Autodesk Maya",
+        softwareKey: "maya",
+        prefix: "AC"
     },
     "ani-layout": {
         name: "Ani Layout",
@@ -407,7 +471,7 @@ function getEffectiveStatus(license) {
     if (daysRemaining !== null && daysRemaining <= 0) {
         return "expired";
     }
-    if (status === "active" || license.ownerUid || license.activatedAt) {
+    if (status === "active" || license.hasOwner || license.activatedAt) {
         return "active";
     }
 
@@ -547,13 +611,18 @@ function updateMetrics() {
 
 function generateLicenseKey(productId = els.productId.value) {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const typePrefix = els.licenseType.value === "family" ? "COM" : "PER";
     const prefix = getProductMeta(productId).prefix;
-    const parts = [prefix];
+    const parts = [typePrefix, prefix];
+    const randomBytes = new Uint8Array(8);
+    crypto.getRandomValues(randomBytes);
+    let byteIndex = 0;
 
     for (let p = 0; p < 2; p++) {
         let part = "";
         for (let i = 0; i < 4; i++) {
-            part += chars[Math.floor(Math.random() * chars.length)];
+            part += chars[randomBytes[byteIndex] % chars.length];
+            byteIndex += 1;
         }
         parts.push(part);
     }
@@ -583,6 +652,7 @@ function clearForm() {
     lastGeneratedKeys = [];
     els.licenseEmail.value = "";
     els.contactInfo.value = "";
+    els.licenseType.value = "personal";
     setProduct("ani-deepth");
     els.licenseKey.value = generateLicenseKey("ani-deepth");
     els.durationDays.value = "365";
@@ -689,18 +759,18 @@ async function loadProductRelease() {
     setReleaseFormBusy(true);
 
     try {
-        const snapshot = await getDoc(doc(db, "productReleases", productId));
+        const response = await adminApi(`/v1/admin/releases?${new URLSearchParams({ productId }).toString()}`);
         if (sequence !== releaseLoadSequence) {
             return;
         }
 
         clearReleaseForm();
-        if (!snapshot.exists()) {
+        if (!response.release) {
             setStatus(`${getProductName(productId)} chưa có bản phát hành.`);
             return;
         }
 
-        const documentData = snapshot.data();
+        const documentData = response.release;
         const release = documentData.draft || documentData.published || documentData;
         fillReleaseForm(release);
         const published = documentData.published || (documentData.version ? documentData : null);
@@ -723,16 +793,10 @@ async function saveProductRelease() {
 
     setReleaseFormBusy(true);
     try {
-        await setDoc(doc(db, "productReleases", productId), {
-            productId,
-            productName: getProductName(productId),
-            software: getProductSoftware(productId),
-            draft,
-            draftSavedAt: serverTimestamp(),
-            updatedBy: auth.currentUser ? auth.currentUser.uid : "",
-            updatedByEmail: auth.currentUser ? auth.currentUser.email || "" : "",
-            updatedAt: serverTimestamp()
-        }, { merge: true });
+        await adminApi("/v1/admin/releases/actions", {
+            method: "POST",
+            body: { action: "save-draft", release: draft }
+        });
         setStatus(`Đã lưu bản nháp ${getProductName(productId)}. Người dùng chưa nhận cập nhật.`);
     } finally {
         setReleaseFormBusy(false);
@@ -742,20 +806,12 @@ async function saveProductRelease() {
 async function publishProductRelease() {
     const productId = els.releaseProductId.value;
     const published = getReleasePayload(true);
-    const releaseId = `${productId}-${published.version || "disabled"}-${Date.now()}`;
     setReleaseFormBusy(true);
     try {
-        await setDoc(doc(db, "productReleases", productId), {
-            productId,
-            productName: getProductName(productId),
-            software: getProductSoftware(productId),
-            draft: published,
-            published: { ...published, releaseId, publishedAt: new Date().toISOString() },
-            publishedAt: serverTimestamp(),
-            updatedBy: auth.currentUser ? auth.currentUser.uid : "",
-            updatedByEmail: auth.currentUser ? auth.currentUser.email || "" : "",
-            updatedAt: serverTimestamp()
-        }, { merge: true });
+        await adminApi("/v1/admin/releases/actions", {
+            method: "POST",
+            body: { action: "publish", release: published }
+        });
         els.releasePublishState.textContent = published.version ? `Đang phát hành v${published.version}` : "Đã tắt phát hành";
         setStatus(`Đã phát hành cập nhật ${getProductName(productId)}${published.version ? ` v${published.version}` : ""}.`);
     } finally {
@@ -790,106 +846,20 @@ function getFormPayload() {
         id: licenseKey,
         data: {
             email,
-            ownerUid: "",
             productId: els.productId.value || "ani-deepth",
-            status: "available",
-            plan: "creator",
+            licenseType: els.licenseType.value === "family" ? "family" : "personal",
             durationDays: parseRequiredInteger(els.durationDays, "Số ngày", MIN_DURATION_DAYS, MAX_DURATION_DAYS),
-            maxDevices: parseRequiredInteger(els.maxDevices, "Số máy", 1, 20),
-            contactInfo,
-            note: "",
-            updatedAt: serverTimestamp()
+            maxDevices: parseRequiredInteger(els.maxDevices, "Số máy / seat", 1, 100),
+            contactInfo
         }
     };
 }
 
 async function saveNewLicenseDocument(id, data) {
-    const targetRef = doc(db, "licenses", id);
-    const existing = await getDoc(targetRef);
-
-    if (existing.exists()) {
-        throw new Error("License key này đã tồn tại. Hãy sinh key khác.");
-    }
-
-    await setDoc(targetRef, {
-        ...data,
-        licenseKey: id,
-        createdBy: auth.currentUser ? auth.currentUser.uid : "",
-        createdByEmail: auth.currentUser ? auth.currentUser.email || "" : "",
-        createdAt: serverTimestamp(),
-        devices: [],
-        deviceCount: 0,
-        activatedAt: null
+    return adminApi("/v1/admin/licenses", {
+        method: "POST",
+        body: { licenseKey: id, ...data }
     });
-}
-
-async function writeLicenseEvent(license, action, detail = {}) {
-    await addDoc(collection(db, "licenseEvents"), {
-        licenseId: license.id,
-        licenseKey: license.licenseKey || license.id,
-        productId: license.productId || "",
-        action,
-        detail,
-        actorUid: auth.currentUser ? auth.currentUser.uid : "",
-        actorEmail: auth.currentUser ? auth.currentUser.email || "" : "",
-        createdAt: serverTimestamp()
-    });
-}
-
-async function updateLicenseFields(license, fields, action, detail = {}) {
-    await updateDoc(doc(db, "licenses", license.id), {
-        ...fields,
-        updatedAt: serverTimestamp(),
-        updatedBy: auth.currentUser ? auth.currentUser.uid : "",
-        updatedByEmail: auth.currentUser ? auth.currentUser.email || "" : ""
-    });
-    await writeLicenseEvent(license, action, detail);
-}
-
-async function deleteLicenseDocument(license, action = "license-delete", detail = {}) {
-    await writeLicenseEvent(license, action, {
-        ...detail,
-        deletedLicense: {
-            licenseKey: license.licenseKey || license.id,
-            productId: license.productId || "",
-            email: license.email || "",
-            contactInfo: license.contactInfo || "",
-            status: license.status || "",
-            ownerUid: license.ownerUid || ""
-        }
-    });
-    await deleteDoc(doc(db, "licenses", license.id));
-}
-
-function buildStatusFields(license, nextStatus) {
-    const fields = { status: nextStatus };
-    const previousStatus = String(license.status || "available").toLowerCase();
-
-    if (nextStatus === "blocked") {
-        fields.blockedAt = serverTimestamp();
-        fields.blockedBy = auth.currentUser ? auth.currentUser.uid : "";
-    }
-    if (nextStatus === "voided") {
-        fields.voidedAt = serverTimestamp();
-        fields.voidedBy = auth.currentUser ? auth.currentUser.uid : "";
-    }
-    if (nextStatus === "paused") {
-        const remaining = getDaysRemaining(license);
-        fields.pausedAt = serverTimestamp();
-        fields.pausedBy = auth.currentUser ? auth.currentUser.uid : "";
-        fields.pausedRemainingDays = Number.isFinite(remaining)
-            ? Math.max(0, remaining)
-            : clampDurationDays(license.durationDays || 1);
-    }
-    if (previousStatus === "paused" && nextStatus === "active") {
-        const pausedRemainingDays = Number(license.pausedRemainingDays);
-        if (Number.isFinite(pausedRemainingDays) && license.activatedAt) {
-            fields.durationDays = clampDurationDays(getElapsedDaysSinceActivation(license) + pausedRemainingDays);
-        }
-        fields.resumedAt = serverTimestamp();
-    }
-
-    return fields;
 }
 
 async function updateLicenseStatus(license, nextStatus) {
@@ -909,15 +879,15 @@ async function updateLicenseStatus(license, nextStatus) {
             return;
         }
 
-        await deleteLicenseDocument(
-            license,
-            "license-delete",
-            { from: currentStatus, reason: "voided-from-status-menu" }
-        );
+        await adminApi("/v1/admin/licenses/actions", {
+            method: "POST",
+            body: { action: "delete", licenseIds: [license.id] }
+        });
         selectedLicenseIds.delete(license.id);
         if (selectedLicenseId === license.id) {
             selectedLicenseId = "";
         }
+        await loadLicenses();
         setStatus(`Đã xóa license ${license.licenseKey || license.id}.`);
         return;
     }
@@ -926,38 +896,34 @@ async function updateLicenseStatus(license, nextStatus) {
         return;
     }
 
-    await updateLicenseFields(
-        license,
-        buildStatusFields(license, normalizedStatus),
-        "status-change",
-        { from: currentStatus, to: normalizedStatus }
-    );
+    await adminApi("/v1/admin/licenses/actions", {
+        method: "POST",
+        body: { action: "set-status", licenseIds: [license.id], status: normalizedStatus }
+    });
+    await loadLicenses();
     setStatus(`Đã đổi trạng thái ${license.licenseKey || license.id}.`);
 }
 
-async function setLicenseDuration(license, nextDurationDays, action = "duration-set") {
+async function setLicenseDuration(license, nextDurationDays) {
     const previousDays = clampDurationDays(license.durationDays || 1);
     const nextDays = clampDurationDays(nextDurationDays);
 
     if (nextDays === previousDays) {
         return;
     }
-    const fields = { durationDays: nextDays };
-    if (String(license.status || "").toLowerCase() === "paused" && Number.isFinite(Number(license.pausedRemainingDays))) {
-        fields.pausedRemainingDays = Math.max(0, Number(license.pausedRemainingDays) + (nextDays - previousDays));
-    }
-
-    await updateLicenseFields(
-        license,
-        fields,
-        action,
-        { from: previousDays, to: nextDays, delta: nextDays - previousDays }
-    );
+    await adminApi("/v1/admin/licenses/actions", {
+        method: "POST",
+        body: { action: "set-duration", durationDays: nextDays, licenseIds: [license.id] }
+    });
+    await loadLicenses();
 }
 
 async function applyLicenseDayDelta(license, delta) {
-    const previousDays = clampDurationDays(license.durationDays || 1);
-    await setLicenseDuration(license, previousDays + delta, "duration-delta");
+    await adminApi("/v1/admin/licenses/actions", {
+        method: "POST",
+        body: { action: "adjust-days", delta, licenseIds: [license.id] }
+    });
+    await loadLicenses();
 }
 
 function getSortValue(license, key) {
@@ -978,7 +944,7 @@ function getSortValue(license, key) {
             return license.contactInfo || "";
         case "createdAt":
         default:
-            return license.createdAt?.seconds || 0;
+            return getTimestampDate(license.createdAt)?.getTime() || 0;
     }
 }
 
@@ -1023,7 +989,7 @@ function updateSortHeaders() {
 }
 
 function getEditableStatusOptions(license) {
-    const hasOwner = Boolean(license.ownerUid || license.activatedAt);
+    const hasOwner = Boolean(license.hasOwner || license.activatedAt);
 
     return editableStatusOptions.filter((option) => {
         if (option.value === "active") {
@@ -1087,6 +1053,20 @@ function getSelectedLicenses() {
     return licenses.filter((license) => selectedLicenseIds.has(license.id));
 }
 
+async function applyLicenseActionToIds(action, licenseIds) {
+    try {
+        for (let index = 0; index < licenseIds.length; index += 8) {
+            await adminApi("/v1/admin/licenses/actions", {
+                method: "POST",
+                body: { ...action, licenseIds: licenseIds.slice(index, index + 8) }
+            });
+        }
+    } finally {
+        // A later item can fail after earlier items were accepted; always resync the table.
+        await loadLicenses();
+    }
+}
+
 async function applyBulkDayDelta(direction) {
     const amount = parseRequiredInteger(els.bulkDayAmount, "Số ngày hàng loạt", 1, MAX_DURATION_DAYS);
     const delta = direction * amount;
@@ -1101,7 +1081,10 @@ async function applyBulkDayDelta(direction) {
     }
 
     setStatus(`Đang cập nhật ${targets.length} license...`);
-    await Promise.all(targets.map((license) => applyLicenseDayDelta(license, delta)));
+    await applyLicenseActionToIds(
+        { action: "adjust-days", delta },
+        targets.map((license) => license.id)
+    );
     setStatus(`Đã cập nhật ${targets.length} license.`);
 }
 
@@ -1141,11 +1124,10 @@ async function applyBulkStatus(nextStatus) {
         }
 
         setStatus(`Đang xóa ${editableTargets.length} license...`);
-        await Promise.all(editableTargets.map((license) => deleteLicenseDocument(
-            license,
-            "bulk-license-delete",
-            { from: String(license.status || "available").toLowerCase(), reason: "bulk-voided-from-status-menu" }
-        )));
+        await applyLicenseActionToIds(
+            { action: "delete" },
+            editableTargets.map((license) => license.id)
+        );
         editableTargets.forEach((license) => selectedLicenseIds.delete(license.id));
         if (editableTargets.some((license) => license.id === selectedLicenseId)) {
             selectedLicenseId = "";
@@ -1160,12 +1142,10 @@ async function applyBulkStatus(nextStatus) {
     }
 
     setStatus(`Đang đổi trạng thái ${editableTargets.length} license...`);
-    await Promise.all(editableTargets.map((license) => updateLicenseFields(
-        license,
-        buildStatusFields(license, normalizedStatus),
-        "bulk-status-change",
-        { from: String(license.status || "available").toLowerCase(), to: normalizedStatus }
-    )));
+    await applyLicenseActionToIds(
+        { action: "set-status", status: normalizedStatus },
+        editableTargets.map((license) => license.id)
+    );
     setStatus(`Đã đổi trạng thái ${editableTargets.length} license.`);
 }
 
@@ -1190,7 +1170,7 @@ function renderLicenses() {
             license.licenseKey || "",
             license.email || "",
             license.contactInfo || "",
-            license.ownerUid || "",
+            license.hasOwner ? "claimed" : "unclaimed",
             license.productId || "",
             meta.name,
             meta.software,
@@ -1258,24 +1238,7 @@ function getAdminSetupMessage(user) {
 }
 
 async function verifyAdmin(user) {
-    const adminSnap = await getDoc(doc(db, "admins", user.uid));
-    if (!adminSnap.exists()) {
-        throw new Error(getAdminSetupMessage(user));
-    }
-}
-
-function subscribeLicenses() {
-    if (unsubscribeLicenses) {
-        unsubscribeLicenses();
-    }
-
-    unsubscribeLicenses = onSnapshot(collection(db, "licenses"), (snapshot) => {
-        licenses = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-        licenses.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-        renderLicenses();
-    }, (error) => {
-        setStatus(error.message, true);
-    });
+    return adminApi("/v1/admin/account");
 }
 
 els.googleSignInBtn.addEventListener("click", async () => {
@@ -1318,7 +1281,7 @@ els.retryAdminBtn.addEventListener("click", async () => {
     try {
         setStatus("Đang kiểm tra quyền admin...");
         await verifyAdmin(auth.currentUser);
-        showAdmin(auth.currentUser);
+        await showAdmin(auth.currentUser);
     } catch (error) {
         showAccessDenied(auth.currentUser, error);
     }
@@ -1334,6 +1297,7 @@ els.licenseForm.addEventListener("submit", async (event) => {
         await saveNewLicenseDocument(payload.id, payload.data);
         selectedLicenseId = payload.id;
         lastGeneratedKeys = [payload.id];
+        await loadLicenses();
         setStatus("Đã tạo license.");
     } catch (error) {
         setStatus(error.message, true);
@@ -1346,6 +1310,16 @@ els.generateKeyBtn.addEventListener("click", () => {
     els.licenseKey.value = generateLicenseKey();
     renderLicenses();
     setStatus("Đã sinh license key. Kiểm tra thông tin rồi bấm Tạo.");
+});
+
+els.licenseType.addEventListener("change", () => {
+    selectedLicenseId = "";
+    lastGeneratedKeys = [];
+    els.licenseKey.value = generateLicenseKey();
+    renderLicenses();
+    setStatus(els.licenseType.value === "family"
+        ? "Đang tạo Family license. Số máy được dùng làm số seat."
+        : "Đang tạo Personal license.");
 });
 
 els.licenseKey.addEventListener("input", () => {
@@ -1682,6 +1656,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 function showLogin() {
+    licenseLoadSequence += 1;
+    licenses = [];
     els.userEmail.textContent = "Chưa đăng nhập";
     els.signOutBtn.hidden = true;
     els.loginPanel.hidden = false;
@@ -1690,7 +1666,7 @@ function showLogin() {
     els.adminPanel.hidden = true;
 }
 
-function showAdmin(user) {
+async function showAdmin(user) {
     els.userEmail.textContent = user.email || user.uid;
     els.signOutBtn.hidden = false;
     els.loginPanel.hidden = true;
@@ -1699,7 +1675,8 @@ function showAdmin(user) {
     els.adminPanel.hidden = false;
     clearForm();
     setActiveWorkspaceTab("create");
-    subscribeLicenses();
+    setStatus("Đang tải danh sách license...");
+    await loadLicenses();
 }
 
 function showAccessDenied(user, error) {
@@ -1711,11 +1688,9 @@ function showAccessDenied(user, error) {
     els.loginCard.hidden = true;
     els.accessPanel.hidden = false;
     els.adminPanel.hidden = true;
-    if (unsubscribeLicenses) {
-        unsubscribeLicenses();
-        unsubscribeLicenses = null;
-    }
-    const message = error.code === "permission-denied" ? getAdminSetupMessage(user) : error.message;
+    licenseLoadSequence += 1;
+    licenses = [];
+    const message = error.code === "ADMIN_REQUIRED" ? getAdminSetupMessage(user) : error.message;
     setStatus(message, true);
 }
 
@@ -1736,16 +1711,12 @@ onAuthStateChanged(auth, async (user) => {
 
     if (!user) {
         showLogin();
-        if (unsubscribeLicenses) {
-            unsubscribeLicenses();
-            unsubscribeLicenses = null;
-        }
         return;
     }
 
     try {
         await verifyAdmin(user);
-        showAdmin(user);
+        await showAdmin(user);
     } catch (error) {
         showAccessDenied(user, error);
     }
